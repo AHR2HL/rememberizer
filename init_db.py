@@ -4,7 +4,7 @@ Run this script to manually initialize the database and load fact domains.
 Normally, the database initializes automatically on first request.
 """
 
-from app import app, init_database
+from app import init_database
 
 if __name__ == "__main__":
     print("Initializing database...")

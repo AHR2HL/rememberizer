@@ -228,10 +228,13 @@ def generate_question(fact, context_field, quiz_field, all_facts, domain):
             f"Which {domain_singular} has {context_value} as their {context_field}?"
         )
     else:
-        # Neither is name: "What is the domain of the Greek Muse with symbol = Lyre?"
+        # Neither is name: "What is domain of Greek Muse with symbol=Lyre?"
         domain_name = domain.name if hasattr(domain, "name") else "item"
         domain_singular = singularize_domain_name(domain_name).lower()
-        question = f"What is the {quiz_field} of the {domain_singular} with {context_field} = {context_value}?"
+        question = (
+            f"What is the {quiz_field} of the {domain_singular} "
+            f"with {context_field} = {context_value}?"
+        )
 
     # Collect wrong answers from quiz_field
     wrong_answers = []
@@ -354,7 +357,7 @@ def get_next_unlearned_fact(domain_id):
 
 def prepare_quiz_question_for_fact(fact, domain_id, last_question_key=None):
     """
-    Prepare a quiz question for a specific fact, avoiding duplicate of last question if possible.
+    Prepare quiz question for fact, avoiding duplicate if possible.
 
     Args:
         fact: Fact object to quiz

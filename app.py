@@ -202,9 +202,10 @@ def quiz():
     session["current_fact_id"] = question_data["fact_id"]
     session["current_field_name"] = question_data["quiz_field"]
     session["correct_index"] = question_data["correct_index"]
-    session["last_question_key"] = (
-        f"{question_data['fact_id']}:{question_data['context_field']}:{question_data['quiz_field']}"
-    )
+    fact_id = question_data["fact_id"]
+    context = question_data["context_field"]
+    quiz = question_data["quiz_field"]
+    session["last_question_key"] = f"{fact_id}:{context}:{quiz}"
 
     domain = Domain.query.get(domain_id)
 
@@ -228,7 +229,6 @@ def answer():
     fact_id = session.get("current_fact_id")
     field_name = session.get("current_field_name")
     correct_index = session.get("correct_index")
-    question_count = session.get("question_count", 0)
     domain_id = session.get("domain_id")
 
     # Check if this was a review question

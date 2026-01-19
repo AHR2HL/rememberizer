@@ -391,7 +391,11 @@ def test_prepare_quiz_question_avoids_consecutive_duplicate(app, populated_db):
 
         # Generate first question
         question_data1 = prepare_quiz_question(populated_db.id, 0)
-        last_key = f"{question_data1['fact_id']}:{question_data1['context_field']}:{question_data1['quiz_field']}"
+        last_key = (
+            f"{question_data1['fact_id']}:"
+            f"{question_data1['context_field']}:"
+            f"{question_data1['quiz_field']}"
+        )
 
         # Generate second question with same fact (simulate pending fact scenario)
         # If the fact has more than 2 fields, it should avoid the duplicate
@@ -405,7 +409,11 @@ def test_prepare_quiz_question_avoids_consecutive_duplicate(app, populated_db):
                 question_data2 = prepare_quiz_question_for_fact(
                     fact, populated_db.id, last_key
                 )
-                current_key = f"{question_data2['fact_id']}:{question_data2['context_field']}:{question_data2['quiz_field']}"
+                current_key = (
+                    f"{question_data2['fact_id']}:"
+                    f"{question_data2['context_field']}:"
+                    f"{question_data2['quiz_field']}"
+                )
                 if current_key != last_key:
                     different_count += 1
 
@@ -429,7 +437,6 @@ def test_prepare_quiz_question_for_fact_with_last_question_key(app, populated_db
             )
 
             assert question_data is not None
-            current_key = f"{question_data['fact_id']}:{question_data['context_field']}:{question_data['quiz_field']}"
 
             # Should try to avoid the last key (though not guaranteed)
             # Just verify it returns valid data

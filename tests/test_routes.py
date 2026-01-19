@@ -617,7 +617,7 @@ def test_review_pattern_multiple_facts(client, app, populated_db):
         sess["pending_quiz_fact_id"] = fact0_id
 
     for i in range(2):
-        response = client.get("/quiz")
+        client.get("/quiz")
         with client.session_transaction() as sess:
             fact_id = sess["current_fact_id"]
             question_log.append(("fact0", i + 1, fact_id))
@@ -629,7 +629,7 @@ def test_review_pattern_multiple_facts(client, app, populated_db):
         sess["pending_quiz_fact_id"] = fact1_id
 
     for i in range(2):
-        response = client.get("/quiz")
+        client.get("/quiz")
         with client.session_transaction() as sess:
             fact_id = sess["current_fact_id"]
             question_log.append(("fact1", i + 1, fact_id))
@@ -637,7 +637,7 @@ def test_review_pattern_multiple_facts(client, app, populated_db):
         client.post("/answer", data={"answer": correct_index})
 
     # Next should be review of fact 0
-    response = client.get("/quiz")
+    client.get("/quiz")
     with client.session_transaction() as sess:
         review_fact_id = sess["current_fact_id"]
         question_log.append(("review", 1, review_fact_id))
@@ -659,8 +659,8 @@ def test_reinforcement_every_tenth_question(client, app, populated_db):
         for fact in facts:
             mark_fact_learned(fact.id)
 
-        # Master first fact (7 correct attempts, all on same field to avoid triggering reviews)
-        # Record them all at once so has_two_consecutive_correct is already satisfied
+        # Master first fact (7 correct attempts)
+        # Record all at once so has_two_consecutive_correct is satisfied
         for i in range(7):
             record_attempt(facts[0].id, "name", True)
 
