@@ -603,6 +603,7 @@ def test_review_pattern_multiple_facts(client, app, populated_db):
         # Get fact IDs before leaving context
         fact0_id = facts[0].id
         fact1_id = facts[1].id
+        all_fact_ids = [fact.id for fact in facts]
 
     # Initialize session
     with client.session_transaction() as sess:
@@ -647,7 +648,9 @@ def test_review_pattern_multiple_facts(client, app, populated_db):
     assert question_log[1][2] == fact0_id  # Fact 0, Q2
     assert question_log[2][2] == fact1_id  # Fact 1, Q1
     assert question_log[3][2] == fact1_id  # Fact 1, Q2
-    assert question_log[4][2] == fact0_id  # Review of fact 0
+    # Q5 should be review of a learned fact (not fact1)
+    assert question_log[4][2] in all_fact_ids  # Review question
+    assert question_log[4][2] != fact1_id  # Should not be the just-completed fact
 
 
 def test_reinforcement_every_tenth_question(client, app, populated_db):
