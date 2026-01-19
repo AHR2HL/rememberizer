@@ -115,61 +115,63 @@ def init_database():
                 db.session.add(org)
                 db.session.commit()
 
-            print("\n" + "=" * 60)
-            print("FIRST-TIME SETUP: ADMIN ACCOUNT CREATION")
-            print("=" * 60)
-            print("\nNo admin account found. You need to create one to manage")
-            print("teachers and students in the Rememberizer system.")
-            print("\nThe admin email will be: admin@admin.admin")
+            # Skip interactive prompts during testing
+            if not app.config.get("TESTING"):
+                print("\n" + "=" * 60)
+                print("FIRST-TIME SETUP: ADMIN ACCOUNT CREATION")
+                print("=" * 60)
+                print("\nNo admin account found. You need to create one to manage")
+                print("teachers and students in the Rememberizer system.")
+                print("\nThe admin email will be: admin@admin.admin")
 
-            response = input("\nCreate admin account now? [Y/n]: ").strip().lower()
+                response = input("\nCreate admin account now? [Y/n]: ").strip().lower()
 
-            if response in ["", "y", "yes"]:
-                while True:
-                    password = input("Enter admin password (min 8 chars): ").strip()
+                if response in ["", "y", "yes"]:
+                    while True:
+                        password = input("Enter admin password (min 8 chars): ").strip()
 
-                    if len(password) < 8:
-                        print(
-                            "[ERROR] Password must be at least 8 characters "
-                            "long. Try again."
-                        )
-                        continue
+                        if len(password) < 8:
+                            print(
+                                "[ERROR] Password must be at least 8 characters "
+                                "long. Try again."
+                            )
+                            continue
 
-                    # Confirm password
-                    confirm = input("Confirm admin password: ").strip()
+                        # Confirm password
+                        confirm = input("Confirm admin password: ").strip()
 
-                    if password != confirm:
-                        print("[ERROR] Passwords do not match. Try again.\n")
-                        continue
+                        if password != confirm:
+                            print("[ERROR] Passwords do not match. Try again.\n")
+                            continue
 
-                    # Create admin user
-                    try:
-                        admin = create_user(
-                            email="admin@admin.admin",
-                            password=password,
-                            role="admin",
-                            first_name="Admin",
-                            last_name="User",
-                            organization_id=1,
-                        )
+                        # Create admin user
+                        try:
+                            admin = create_user(
+                                email="admin@admin.admin",
+                                password=password,
+                                role="admin",
+                                first_name="Admin",
+                                last_name="User",
+                                organization_id=1,
+                            )
 
-                        print("\n" + "=" * 60)
-                        print("[OK] Admin account created successfully!")
-                        print("=" * 60)
-                        print("\nLogin credentials:")
-                        print("  Email:    admin@admin.admin")
-                        print("  Password: (the password you just set)")
-                        print("\nYou can now start the application and log in.")
-                        print("=" * 60 + "\n")
-                        break
+                            print("\n" + "=" * 60)
+                            print("[OK] Admin account created successfully!")
+                            print("=" * 60)
+                            print("\nLogin credentials:")
+                            print("  Email:    admin@admin.admin")
+                            print("  Password: (the password you just set)")
+                            print("\nYou can now start the application and log in.")
+                            print("=" * 60 + "\n")
+                            break
 
-                    except ValueError as e:
-                        print(f"[ERROR] Error creating admin: {e}")
-                        break
-            else:
-                print("\nAdmin account creation skipped.")
-                print("You can create one later by running the application again.")
-                print("=" * 60 + "\n")
+                        except ValueError as e:
+                            print(f"[ERROR] Error creating admin: {e}")
+                            break
+                else:
+                    print("\nAdmin account creation skipped.")
+                    print("You can create one later by running the application again.")
+                    print("=" * 60 + "\n")
 
         _db_initialized = True
 
@@ -188,7 +190,7 @@ def update_last_active():
 
     if current_user.is_authenticated:
         # Update last_active timestamp
-        current_user._user.last_active = datetime.utcnow()
+        current_user.user.last_active = datetime.utcnow()
         db.session.commit()
 
 

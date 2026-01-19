@@ -532,7 +532,7 @@ def create_user(
     # Check if user already exists
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
-        raise ValueError(f"User with email {email} already exists")
+        raise ValueError("Email already exists")
 
     # Validate role
     if role not in ["admin", "teacher", "student"]:
