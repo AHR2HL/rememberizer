@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rememberizer - Quiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="terminal-header">
+            <h1>╔═══════════════════════════════════╗</h1>
+            <h1>║     {{ domain.name.upper() }}    ║</h1>
+            <h1>╚═══════════════════════════════════╝</h1>
+        </div>
+
+        <div class="content">
+            <h2>&gt; QUIZ</h2>
+
+            <div class="quiz-controls">
+                <form method="POST" action="{{ url_for('reset_domain') }}" class="reset-form">
+                    <button type="submit" class="reset-button">
+                        [RESET PROGRESS]
+                    </button>
+                </form>
+            </div>
+
+            <div class="question">
+                <p class="question-text">{{ question }}</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('answer') }}" class="quiz-form">
+                <div class="options">
+                    {% for option in options %}
+                    <button type="submit" name="answer" value="{{ loop.index0 }}" class="option-button">
+                        [{{ loop.index }}] {{ option }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+
+        <div class="footer">
+            <p>────────────────────────────────────</p>
+            <p>Select the correct answer</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,243 @@
+/* Terminal-style CSS for Rememberizer */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #000000;
+    color: #00FF00;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    line-height: 1.6;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.terminal-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.terminal-header h1 {
+    font-size: 18px;
+    font-weight: normal;
+    line-height: 1.2;
+}
+
+.content {
+    margin: 30px 0;
+}
+
+h2 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #00FF00;
+}
+
+/* Domain Selection */
+.domain-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.domain-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.domain-form {
+    flex: 1;
+}
+
+.domain-button {
+    width: 100%;
+    background-color: #000000;
+    color: #00FF00;
+    border: 2px solid #00FF00;
+    padding: 15px 20px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.domain-button:hover {
+    background-color: #00FF00;
+    color: #000000;
+}
+
+.reset-form {
+    display: inline-block;
+}
+
+.reset-button {
+    background-color: #000000;
+    color: #FF0000;
+    border: 2px solid #FF0000;
+    padding: 15px 20px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.reset-button:hover {
+    background-color: #FF0000;
+    color: #000000;
+}
+
+/* Fact Table */
+.fact-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    border: 2px solid #00FF00;
+}
+
+.fact-table th,
+.fact-table td {
+    border: 1px solid #00FF00;
+    padding: 12px 15px;
+    text-align: left;
+}
+
+.fact-table th {
+    background-color: #003300;
+    font-weight: bold;
+}
+
+.fact-table tr:hover {
+    background-color: #001a00;
+}
+
+/* Quiz */
+.quiz-controls {
+    margin: 20px 0;
+    text-align: right;
+}
+
+.question {
+    margin: 30px 0;
+    padding: 20px;
+    border: 2px solid #00FF00;
+    background-color: #001a00;
+}
+
+.question-text {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.quiz-form {
+    margin: 20px 0;
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.option-button {
+    width: 100%;
+    background-color: #000000;
+    color: #00FF00;
+    border: 2px solid #00FF00;
+    padding: 15px 20px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.option-button:hover {
+    background-color: #00FF00;
+    color: #000000;
+    transform: translateX(5px);
+}
+
+/* Buttons */
+.button-container {
+    margin: 30px 0;
+    text-align: center;
+}
+
+.action-button {
+    display: inline-block;
+    background-color: #000000;
+    color: #00FF00;
+    border: 2px solid #00FF00;
+    padding: 15px 30px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-button:hover {
+    background-color: #00FF00;
+    color: #000000;
+}
+
+/* Footer */
+.footer {
+    margin-top: 50px;
+    text-align: center;
+    color: #00AA00;
+    font-size: 14px;
+}
+
+.footer p {
+    margin: 5px 0;
+}
+
+/* Error Messages */
+.error-message {
+    color: #FF0000;
+    border: 2px solid #FF0000;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    body {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .terminal-header h1 {
+        font-size: 14px;
+    }
+
+    h2 {
+        font-size: 16px;
+    }
+
+    .question-text {
+        font-size: 16px;
+    }
+
+    .domain-button,
+    .option-button,
+    .action-button {
+        font-size: 14px;
+        padding: 12px 15px;
+    }
+}

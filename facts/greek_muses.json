@@ -1,0 +1,51 @@
+{
+  "domain_name": "Greek Muses",
+  "fields": ["name", "domain", "symbol"],
+  "facts": [
+    {
+      "name": "Calliope",
+      "domain": "Epic Poetry",
+      "symbol": "Writing tablet"
+    },
+    {
+      "name": "Clio",
+      "domain": "History",
+      "symbol": "Scroll"
+    },
+    {
+      "name": "Erato",
+      "domain": "Love Poetry",
+      "symbol": "Lyre"
+    },
+    {
+      "name": "Euterpe",
+      "domain": "Music",
+      "symbol": "Flute"
+    },
+    {
+      "name": "Melpomene",
+      "domain": "Tragedy",
+      "symbol": "Tragic mask"
+    },
+    {
+      "name": "Polyhymnia",
+      "domain": "Sacred Poetry",
+      "symbol": "Veil"
+    },
+    {
+      "name": "Terpsichore",
+      "domain": "Dance",
+      "symbol": "Lyre"
+    },
+    {
+      "name": "Thalia",
+      "domain": "Comedy",
+      "symbol": "Comic mask"
+    },
+    {
+      "name": "Urania",
+      "domain": "Astronomy",
+      "symbol": "Globe and compass"
+    }
+  ]
+}
