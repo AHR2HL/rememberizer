@@ -34,6 +34,36 @@ db.init_app(app)
 _db_initialized = False
 
 
+@app.template_filter("center_in_box")
+def center_in_box(text, width=35):
+    """
+    Center text within a fixed width for terminal box display.
+
+    Args:
+        text: The text to center
+        width: The interior width of the box (default: 35)
+
+    Returns:
+        String with text centered using spaces, exactly 'width' characters long
+    """
+    if not text:
+        text = ""
+
+    # Convert to string and strip existing whitespace
+    text = str(text).strip()
+
+    # Use Python's built-in center method which handles padding automatically
+    return text.center(width)
+
+
+@app.template_filter("progress_string")
+def progress_string_filter(domain_id):
+    """Generate progress string for a domain."""
+    from models import get_progress_string
+
+    return get_progress_string(domain_id)
+
+
 def init_database():
     """Initialize database and load fact domains."""
     global _db_initialized

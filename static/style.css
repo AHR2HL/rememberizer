@@ -30,6 +30,21 @@ body {
     font-size: 18px;
     font-weight: normal;
     line-height: 1.2;
+    white-space: pre;
+}
+
+/* Progress Indicator */
+.progress-indicator {
+    text-align: center;
+    margin: 15px 0;
+    font-size: 16px;
+}
+
+.progress-indicator p {
+    color: #00FF00;
+    font-family: 'Courier New', Courier, monospace;
+    letter-spacing: 2px;
+    white-space: pre;
 }
 
 .content {
