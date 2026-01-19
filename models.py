@@ -528,6 +528,12 @@ def create_user(
     from werkzeug.security import generate_password_hash
     import secrets
     from datetime import timedelta
+    import re
+
+    # Validate email format
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, email):
+        raise ValueError("Invalid email format")
 
     # Check if user already exists
     existing_user = User.query.filter_by(email=email).first()
@@ -743,7 +749,7 @@ def get_student_progress_summary(student_id):
     # Get assigned domains
     domains = get_user_domains(student_id)
 
-    summary = {"student": student, "domains": []}
+    summary = {"student": student, "domains": [], "total_domains": 0, "total_questions": 0}
 
     for domain in domains:
         facts = Fact.query.filter_by(domain_id=domain.id).all()
@@ -768,6 +774,10 @@ def get_student_progress_summary(student_id):
                 "progress_string": progress_str,
             }
         )
+
+        # Update summary totals
+        summary["total_domains"] += 1
+        summary["total_questions"] += attempt_count
 
     return summary
 

@@ -454,8 +454,8 @@ def test_get_progress_string_all_mastered(app, populated_db, student_user):
         assert progress == "*****"
 
 
-def test_get_progress_string_empty_domain(app):
+def test_get_progress_string_empty_domain(app, student_user):
     """Test progress string with non-existent domain."""
     with app.app_context():
-        progress = get_progress_string(999)
+        progress = get_progress_string(999, student_user.id)
         assert progress == ""
