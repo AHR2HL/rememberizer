@@ -45,7 +45,9 @@ def test_select_next_fact_returns_learned_not_mastered(app, populated_db, studen
         # Should be a learned but not mastered fact
         assert fact is not None
         assert fact.id != facts[0].id  # Should not be the mastered fact
-        assert not get_mastery_status(fact.id, student_user.id)  # Should not be mastered
+        assert not get_mastery_status(
+            fact.id, student_user.id
+        )  # Should not be mastered
 
 
 def test_select_next_fact_reinforcement_question(app, populated_db, student_user):
@@ -381,7 +383,9 @@ def test_generate_question_bidirectional(app, populated_db):
         assert question_data1["question"] != question_data2["question"]
 
 
-def test_prepare_quiz_question_avoids_consecutive_duplicate(app, populated_db, student_user):
+def test_prepare_quiz_question_avoids_consecutive_duplicate(
+    app, populated_db, student_user
+):
     """Test that prepare_quiz_question avoids consecutive duplicates."""
     with app.app_context():
         # Mark all facts as learned

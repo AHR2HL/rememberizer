@@ -33,7 +33,9 @@ def test_start_route(authenticated_student, assigned_domain):
 
 def test_start_route_invalid_domain(authenticated_student):
     """Test starting with invalid domain ID redirects to index."""
-    response = authenticated_student.post("/start", data={"domain_id": 999}, follow_redirects=False)
+    response = authenticated_student.post(
+        "/start", data={"domain_id": 999}, follow_redirects=False
+    )
     assert response.status_code == 302
     assert response.location.endswith("/")
 
@@ -96,7 +98,9 @@ def test_quiz_route_no_session(authenticated_student):
     assert response.location.endswith("/")
 
 
-def test_answer_route_correct(authenticated_student, app, assigned_domain, student_user):
+def test_answer_route_correct(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test submitting a correct answer."""
     with app.app_context():
         fact = Fact.query.first()
@@ -115,7 +119,9 @@ def test_answer_route_correct(authenticated_student, app, assigned_domain, stude
             sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
 
         # Submit correct answer (index 2 which is "TestAnswer")
-        response = authenticated_student.post("/answer", data={"answer": 2}, follow_redirects=False)
+        response = authenticated_student.post(
+            "/answer", data={"answer": 2}, follow_redirects=False
+        )
         assert response.status_code == 200  # Now renders result page
         assert b"CORRECT!" in response.data  # Check for result message
 
@@ -131,7 +137,9 @@ def test_answer_route_correct(authenticated_student, app, assigned_domain, stude
         assert attempt.correct is True
 
 
-def test_answer_route_incorrect(authenticated_student, app, assigned_domain, student_user):
+def test_answer_route_incorrect(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test submitting an incorrect answer."""
     with app.app_context():
         fact = Fact.query.first()
@@ -150,7 +158,9 @@ def test_answer_route_incorrect(authenticated_student, app, assigned_domain, stu
             sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
 
         # Submit incorrect answer (index 1 which is "Wrong2")
-        response = authenticated_student.post("/answer", data={"answer": 1}, follow_redirects=False)
+        response = authenticated_student.post(
+            "/answer", data={"answer": 1}, follow_redirects=False
+        )
         assert response.status_code == 200  # Now renders result page
         assert b"INCORRECT" in response.data  # Check for result message
 
@@ -174,7 +184,9 @@ def test_answer_route_no_answer(authenticated_student):
 
 def test_answer_route_no_session(authenticated_student):
     """Test answer route without session redirects to index."""
-    response = authenticated_student.post("/answer", data={"answer": 1}, follow_redirects=False)
+    response = authenticated_student.post(
+        "/answer", data={"answer": 1}, follow_redirects=False
+    )
     assert response.status_code == 302
     assert response.location.endswith("/")
 
@@ -210,7 +222,9 @@ def test_full_quiz_flow(authenticated_student, app, assigned_domain):
         fact_id = response.request.path.split("/")[-1]
 
         # Mark fact as learned
-        response = authenticated_student.post(f"/mark_learned/{fact_id}", follow_redirects=True)
+        response = authenticated_student.post(
+            f"/mark_learned/{fact_id}", follow_redirects=True
+        )
         assert response.status_code == 200
         assert b"QUIZ" in response.data
 
@@ -246,7 +260,9 @@ def test_mark_learned_route(authenticated_student, app, assigned_domain, student
             sess["user_id"] = student_user.id
 
         # Mark fact as learned
-        response = authenticated_student.post(f"/mark_learned/{fact.id}", follow_redirects=False)
+        response = authenticated_student.post(
+            f"/mark_learned/{fact.id}", follow_redirects=False
+        )
         assert response.status_code == 302
         assert response.location.endswith("/quiz")
 
@@ -296,7 +312,9 @@ def test_reset_domain_route(authenticated_student, app, assigned_domain, student
         )
 
 
-def test_reset_domain_from_menu_route(authenticated_student, app, assigned_domain, student_user):
+def test_reset_domain_from_menu_route(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test resetting domain from menu."""
     with app.app_context():
         fact = Fact.query.first()
@@ -350,7 +368,9 @@ def test_demotion_flow(authenticated_student, app, assigned_domain, student_user
             sess["user_id"] = student_user.id
 
         # First wrong answer
-        response = authenticated_student.post("/answer", data={"answer": 1}, follow_redirects=False)
+        response = authenticated_student.post(
+            "/answer", data={"answer": 1}, follow_redirects=False
+        )
         assert response.status_code == 200  # Now renders result page
         assert b"INCORRECT" in response.data
         assert is_fact_learned(fact.id, student_user.id) is True  # Still learned
@@ -363,7 +383,9 @@ def test_demotion_flow(authenticated_student, app, assigned_domain, student_user
             sess["correct_answer"] = "TestAnswer"
             sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
 
-        response = authenticated_student.post("/answer", data={"answer": 1}, follow_redirects=False)
+        response = authenticated_student.post(
+            "/answer", data={"answer": 1}, follow_redirects=False
+        )
         assert response.status_code == 200  # Now renders result page
         assert b"INCORRECT" in response.data
         assert (
@@ -371,7 +393,9 @@ def test_demotion_flow(authenticated_student, app, assigned_domain, student_user
         )  # Demoted to unlearned
 
 
-def test_two_consecutive_correct_flow(authenticated_student, app, assigned_domain, student_user):
+def test_two_consecutive_correct_flow(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test that 2 consecutive correct answers clears pending quiz fact."""
     with app.app_context():
         fact = Fact.query.first()
@@ -392,7 +416,9 @@ def test_two_consecutive_correct_flow(authenticated_student, app, assigned_domai
             sess["user_id"] = student_user.id
 
         # First correct answer
-        response = authenticated_student.post("/answer", data={"answer": 2}, follow_redirects=False)
+        response = authenticated_student.post(
+            "/answer", data={"answer": 2}, follow_redirects=False
+        )
         assert response.status_code == 200  # Now renders result page
         assert b"CORRECT!" in response.data
         with authenticated_student.session_transaction() as sess:
@@ -406,7 +432,9 @@ def test_two_consecutive_correct_flow(authenticated_student, app, assigned_domai
             sess["correct_answer"] = "TestAnswer"
             sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
 
-        response = authenticated_student.post("/answer", data={"answer": 2}, follow_redirects=False)
+        response = authenticated_student.post(
+            "/answer", data={"answer": 2}, follow_redirects=False
+        )
         assert response.status_code == 200  # Now renders result page
         assert b"CORRECT!" in response.data
         with authenticated_student.session_transaction() as sess:
@@ -495,14 +523,18 @@ def test_quiz_route_supports_bidirectional_questions(
         with authenticated_student.session_transaction() as sess:
             correct_index = sess.get("correct_index", 0)
 
-        authenticated_student.post("/answer", data={"answer": correct_index}, follow_redirects=False)
+        authenticated_student.post(
+            "/answer", data={"answer": correct_index}, follow_redirects=False
+        )
 
     # Both directions should occur (statistical check)
     # With 30 questions, at least one of each should appear
     assert name_as_context_count > 0 or name_as_quiz_count > 0
 
 
-def test_quiz_route_never_asks_field_to_itself(authenticated_student, app, assigned_domain, student_user):
+def test_quiz_route_never_asks_field_to_itself(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test that questions never ask field→itself."""
     with app.app_context():
         # Mark all facts as learned
@@ -536,7 +568,9 @@ def test_quiz_route_never_asks_field_to_itself(authenticated_student, app, assig
         with authenticated_student.session_transaction() as sess:
             correct_index = sess.get("correct_index", 0)
 
-        authenticated_student.post("/answer", data={"answer": correct_index}, follow_redirects=False)
+        authenticated_student.post(
+            "/answer", data={"answer": correct_index}, follow_redirects=False
+        )
 
 
 def test_question_count_increments_on_every_quiz(
@@ -609,7 +643,9 @@ def test_review_question_after_two_consecutive_correct(
         assert sess.get("current_fact_id") == fact0_id
 
 
-def test_review_flags_cleared_after_answer(authenticated_student, app, assigned_domain, student_user):
+def test_review_flags_cleared_after_answer(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test that review flags are cleared after answering review question."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=assigned_domain.id).all()
@@ -642,7 +678,9 @@ def test_review_flags_cleared_after_answer(authenticated_student, app, assigned_
         assert "just_completed_fact_id" not in sess
 
 
-def test_review_pattern_multiple_facts(authenticated_student, app, assigned_domain, student_user):
+def test_review_pattern_multiple_facts(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test review pattern: 2 questions on new fact + 1 review."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=assigned_domain.id).all()[:3]
@@ -704,7 +742,9 @@ def test_review_pattern_multiple_facts(authenticated_student, app, assigned_doma
     assert question_log[4][2] != fact1_id  # Should not be the just-completed fact
 
 
-def test_reinforcement_every_tenth_question(authenticated_student, app, assigned_domain, student_user):
+def test_reinforcement_every_tenth_question(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test that Q10, Q20, Q30 are reinforcement questions for mastered facts."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=assigned_domain.id).all()
@@ -738,7 +778,9 @@ def test_reinforcement_every_tenth_question(authenticated_student, app, assigned
         ), "Q10 should be reinforcement of mastered fact"
 
 
-def test_quiz_page_box_rendering(authenticated_student, app, assigned_domain, student_user):
+def test_quiz_page_box_rendering(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test that quiz page renders box correctly."""
     with app.app_context():
         with authenticated_student.session_transaction() as sess:
@@ -762,11 +804,15 @@ def test_select_domain_box_rendering(authenticated_student, assigned_domain):
     assert b"\xe2\x95\x94" in response.data  # ╔
 
 
-def test_progress_indicator_in_quiz_page(authenticated_student, app, assigned_domain, student_user):
+def test_progress_indicator_in_quiz_page(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test that progress indicator appears in quiz page."""
     with app.app_context():
         # Mark all facts as learned so quiz page displays
-        facts = Fact.query.filter_by(domain_id=assigned_domain.id).order_by(Fact.id).all()
+        facts = (
+            Fact.query.filter_by(domain_id=assigned_domain.id).order_by(Fact.id).all()
+        )
         for fact in facts:
             mark_fact_learned(fact.id, student_user.id)
 
@@ -785,7 +831,9 @@ def test_progress_indicator_in_quiz_page(authenticated_student, app, assigned_do
         assert b"*++++" in response.data or b"Facts:" in response.data  # Basic check
 
 
-def test_progress_indicator_in_show_fact_page(authenticated_student, app, assigned_domain):
+def test_progress_indicator_in_show_fact_page(
+    authenticated_student, app, assigned_domain
+):
     """Test that progress indicator appears in show fact page."""
     with app.app_context():
         fact = Fact.query.first()
@@ -797,10 +845,14 @@ def test_progress_indicator_in_show_fact_page(authenticated_student, app, assign
         assert b"\xc2\xb7" in response.data  # Contains · character
 
 
-def test_progress_updates_after_answer(authenticated_student, app, assigned_domain, student_user):
+def test_progress_updates_after_answer(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test that progress indicator updates after answering questions."""
     with app.app_context():
-        facts = Fact.query.filter_by(domain_id=assigned_domain.id).order_by(Fact.id).all()
+        facts = (
+            Fact.query.filter_by(domain_id=assigned_domain.id).order_by(Fact.id).all()
+        )
 
         # Mark first fact as learned and master it
         mark_fact_learned(facts[0].id, student_user.id)
@@ -866,7 +918,9 @@ def test_review_question_wrong_answer_shows_fact(
     assert b"INCORRECT" in response.data
 
 
-def test_demotion_during_review_clears_flags(authenticated_student, app, assigned_domain, student_user):
+def test_demotion_during_review_clears_flags(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test that demotion during review clears review flags."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=assigned_domain.id).all()
@@ -901,7 +955,9 @@ def test_demotion_during_review_clears_flags(authenticated_student, app, assigne
                 wrong_index = i
                 break
 
-    authenticated_student.post("/answer", data={"answer": wrong_index}, follow_redirects=False)
+    authenticated_student.post(
+        "/answer", data={"answer": wrong_index}, follow_redirects=False
+    )
 
     # Flags should be cleared despite demotion
     with authenticated_student.session_transaction() as sess:
@@ -909,7 +965,9 @@ def test_demotion_during_review_clears_flags(authenticated_student, app, assigne
         assert "just_completed_fact_id" not in sess
 
 
-def test_duplicate_field_values_both_accepted(authenticated_student, app, assigned_domain, student_user):
+def test_duplicate_field_values_both_accepted(
+    authenticated_student, app, assigned_domain, student_user
+):
     """Test that duplicate field values are both accepted as correct."""
     from models import db, Domain
 
