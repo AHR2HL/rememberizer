@@ -8,7 +8,6 @@ from models import (
     Fact,
     User,
     Organization,
-    UserDomainAssignment,
     record_attempt,
     mark_fact_learned,
     mark_fact_shown,
@@ -16,12 +15,13 @@ from models import (
     has_two_consecutive_correct,
     reset_domain_progress,
 )
-from facts_loader import load_all_domains_from_directory, get_available_domains
+from facts_loader import load_all_domains_from_directory
 from quiz_logic import (
     get_next_unlearned_fact,
     prepare_quiz_question_for_fact,
     select_next_fact,
 )
+from auth import login_manager
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
@@ -34,8 +34,6 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
 # Initialize Flask-Login
-from auth import login_manager
-
 login_manager.init_app(app)
 
 # Flag to track if database has been initialized
@@ -132,7 +130,8 @@ def init_database():
 
                     if len(password) < 8:
                         print(
-                            "[ERROR] Password must be at least 8 characters long. Try again."
+                            "[ERROR] Password must be at least 8 characters "
+                            "long. Try again."
                         )
                         continue
 
@@ -158,8 +157,8 @@ def init_database():
                         print("[OK] Admin account created successfully!")
                         print("=" * 60)
                         print("\nLogin credentials:")
-                        print(f"  Email:    admin@admin.admin")
-                        print(f"  Password: (the password you just set)")
+                        print("  Email:    admin@admin.admin")
+                        print("  Password: (the password you just set)")
                         print("\nYou can now start the application and log in.")
                         print("=" * 60 + "\n")
                         break
@@ -229,15 +228,20 @@ The Rememberizer Team
             """,
             html=f"""
 <html>
-<body style="font-family: monospace; background-color: #000; color: #00FF00; padding: 20px;">
+<body style="font-family: monospace; background-color: #000; """
+            f"""color: #00FF00; padding: 20px;">
     <h2>Welcome to Rememberizer</h2>
     <p>Hello {user.first_name} {user.last_name},</p>
     <p>Your Rememberizer account has been created!</p>
-    <p>To complete your setup and create your password, please click below:</p>
-    <p><a href="{setup_url}" style="color: #00FF00; font-weight: bold;">[SET UP YOUR ACCOUNT]</a></p>
+    <p>To complete your setup and create your password, """
+            f"""please click below:</p>
+    <p><a href="{setup_url}" """
+            f"""style="color: #00FF00; font-weight: bold;">"""
+            f"""[SET UP YOUR ACCOUNT]</a></p>
     <p>Or copy this link: {setup_url}</p>
     <p style="color: #FFFF00;">This link will expire in 7 days.</p>
-    <p style="font-size: 12px; color: #00AA00;">If you did not request this account, please ignore this email.</p>
+    <p style="font-size: 12px; color: #00AA00;">"""
+            f"""If you did not request this account, please ignore this email.</p>
 </body>
 </html>
             """,
@@ -276,7 +280,8 @@ def send_user_setup_notification(user, role_name):
 
     if email_sent:
         flash(
-            f"{role_name} {user.get_full_name()} created! Setup email sent to {user.email}",
+            f"{role_name} {user.get_full_name()} created! "
+            f"Setup email sent to {user.email}",
             "success",
         )
     else:
@@ -385,7 +390,7 @@ def setup_password(token):
         user.setup_token_expires = None
         db.session.commit()
 
-        flash(f"Password set successfully! You can now log in.", "success")
+        flash("Password set successfully! You can now log in.", "success")
         return redirect(url_for("login"))
 
     return render_template("setup_password.html", user=user, token=token)
@@ -399,7 +404,6 @@ def setup_password(token):
 @app.route("/admin/dashboard")
 def admin_dashboard():
     """Admin dashboard."""
-    from auth import role_required
     from models import User, Domain
     from flask_login import current_user
 
@@ -535,8 +539,6 @@ def teacher_dashboard():
         abort(403)
 
     # Get all students in teacher's organization
-    from models import get_students_by_teacher
-
     students = get_students_by_teacher(current_user.id)
 
     # Get available domains for display
@@ -865,7 +867,7 @@ def deactivate_student(student_id):
 @app.route("/student/domains")
 def student_domains():
     """Student domain selection - show only assigned domains with progress."""
-    from flask_login import current_user, login_required
+    from flask_login import current_user
     from models import (
         get_user_domains,
         get_student_domain_progress,
@@ -1326,7 +1328,7 @@ def answer():
         session.pop("pending_review_fact_id", None)
         session.pop("just_completed_fact_id", None)
 
-        # Fact returned to unlearned - show it again with highlighted field (pass user_id)
+        # Fact returned to unlearned - show it again with highlighted field
         mark_fact_shown(fact_id, current_user.id)
         next_url = url_for("show_fact", fact_id=fact_id, highlight_field=field_name)
 

@@ -8,11 +8,7 @@ from models import (
     db,
     Domain,
     Fact,
-    User,
     Organization,
-    UserDomainAssignment,
-    FactState,
-    Attempt,
     create_user,
     assign_domain_to_user,
 )

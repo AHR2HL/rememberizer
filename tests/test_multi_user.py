@@ -4,7 +4,6 @@ import pytest
 from models import (
     is_fact_learned,
     get_learned_facts,
-    get_unlearned_facts,
     mark_fact_learned,
     record_attempt,
     reset_domain_progress,
