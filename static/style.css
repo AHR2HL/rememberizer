@@ -33,6 +33,20 @@ body {
     white-space: pre;
 }
 
+/* Progress Indicator */
+.progress-indicator {
+    text-align: center;
+    margin: 15px 0;
+    font-size: 16px;
+}
+
+.progress-indicator p {
+    color: #00FF00;
+    font-family: 'Courier New', Courier, monospace;
+    letter-spacing: 2px;
+    white-space: pre;
+}
+
 .content {
     margin: 30px 0;
 }

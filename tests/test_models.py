@@ -19,6 +19,7 @@ from models import (
     update_consecutive_attempts,
     has_two_consecutive_correct,
     reset_domain_progress,
+    get_progress_string,
 )
 
 
@@ -388,3 +389,53 @@ def test_reset_domain_progress(app, populated_db):
         # Verify all progress cleared
         assert Attempt.query.filter_by(fact_id=fact.id).count() == 0
         assert FactState.query.filter_by(fact_id=fact.id).count() == 0
+
+
+def test_get_progress_string_all_unlearned(app, populated_db):
+    """Test progress string with all facts unlearned."""
+    with app.app_context():
+        progress = get_progress_string(populated_db.id)
+        assert progress == "·····"  # 5 facts, all unlearned
+
+
+def test_get_progress_string_mixed_states(app, populated_db):
+    """Test progress string with facts in different states."""
+    with app.app_context():
+        facts = Fact.query.filter_by(domain_id=populated_db.id).order_by(Fact.id).all()
+
+        # Fact 0: shown but not learned
+        mark_fact_shown(facts[0].id)
+
+        # Fact 1: learned but not mastered
+        mark_fact_learned(facts[1].id)
+
+        # Fact 2: mastered (7 correct attempts)
+        mark_fact_learned(facts[2].id)
+        for i in range(7):
+            record_attempt(facts[2].id, "name", True)
+
+        # Facts 3-4: unlearned
+
+        progress = get_progress_string(populated_db.id)
+        assert progress == "-+*··"
+
+
+def test_get_progress_string_all_mastered(app, populated_db):
+    """Test progress string with all facts mastered."""
+    with app.app_context():
+        facts = Fact.query.filter_by(domain_id=populated_db.id).all()
+
+        for fact in facts:
+            mark_fact_learned(fact.id)
+            for i in range(7):
+                record_attempt(fact.id, "name", True)
+
+        progress = get_progress_string(populated_db.id)
+        assert progress == "*****"
+
+
+def test_get_progress_string_empty_domain(app):
+    """Test progress string with non-existent domain."""
+    with app.app_context():
+        progress = get_progress_string(999)
+        assert progress == ""

@@ -337,3 +337,50 @@ def reset_domain_progress(domain_id):
         # Delete fact state
         FactState.query.filter_by(fact_id=fact.id).delete()
     db.session.commit()
+
+
+def get_progress_string(domain_id):
+    """
+    Generate a progress string showing status of all facts in domain.
+
+    Returns a string of symbols (·-+*) representing fact states:
+    · = unlearned (not shown)
+    - = shown (but not learned)
+    + = learned (but not mastered)
+    * = mastered
+
+    Args:
+        domain_id: The domain ID
+
+    Returns:
+        String of symbols, one per fact (e.g., "·-+*····")
+    """
+    # Get all facts for domain, ordered by ID for consistency
+    domain = Domain.query.get(domain_id)
+    if not domain:
+        return ""
+
+    facts = Fact.query.filter_by(domain_id=domain_id).order_by(Fact.id).all()
+
+    progress_symbols = []
+    for fact in facts:
+        # Get fact state
+        state = FactState.query.filter_by(fact_id=fact.id).first()
+
+        # Determine symbol based on state
+        if not state or (state.learned_at is None and state.last_shown_at is None):
+            # Unlearned - not shown yet
+            symbol = "·"
+        elif state.learned_at is None:
+            # Shown but not learned
+            symbol = "-"
+        elif get_mastery_status(fact.id):
+            # Mastered
+            symbol = "*"
+        else:
+            # Learned but not mastered
+            symbol = "+"
+
+        progress_symbols.append(symbol)
+
+    return "".join(progress_symbols)
