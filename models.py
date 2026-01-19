@@ -531,7 +531,7 @@ def create_user(
     import re
 
     # Validate email format
-    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     if not re.match(email_pattern, email):
         raise ValueError("Invalid email format")
 
@@ -749,7 +749,12 @@ def get_student_progress_summary(student_id):
     # Get assigned domains
     domains = get_user_domains(student_id)
 
-    summary = {"student": student, "domains": [], "total_domains": 0, "total_questions": 0}
+    summary = {
+        "student": student,
+        "domains": [],
+        "total_domains": 0,
+        "total_questions": 0,
+    }
 
     for domain in domains:
         facts = Fact.query.filter_by(domain_id=domain.id).all()
