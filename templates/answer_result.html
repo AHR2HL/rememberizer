@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rememberizer - Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .result-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 50vh;
+            margin: 50px 0;
+        }
+
+        .result-icon {
+            font-size: 120px;
+            font-weight: bold;
+            animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            margin: 20px 0;
+        }
+
+        .result-icon.correct {
+            color: #00FF00;
+        }
+
+        .result-icon.incorrect {
+            color: #FF0000;
+        }
+
+        .result-text {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .result-text.correct {
+            color: #00FF00;
+        }
+
+        .result-text.incorrect {
+            color: #FF0000;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Add a subtle pulse effect */
+        .result-icon.correct {
+            animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55),
+                       pulse 1s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="terminal-header">
+            <h1>╔═══════════════════════════════════╗</h1>
+            <h1>║{{ domain.name.upper() | center_in_box }}║</h1>
+            <h1>╚═══════════════════════════════════╝</h1>
+        </div>
+
+        <div class="result-container">
+            {% if is_correct %}
+                <div class="result-icon correct">✓</div>
+                <div class="result-text correct">CORRECT!</div>
+            {% else %}
+                <div class="result-icon incorrect">✗</div>
+                <div class="result-text incorrect">INCORRECT</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Auto-redirect after 1 second
+        setTimeout(function() {
+            window.location.href = "{{ next_url }}";
+        }, 1000);
+    </script>
+</body>
+</html>

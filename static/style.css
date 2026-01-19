@@ -47,6 +47,17 @@ body {
     white-space: pre;
 }
 
+/* Recovery Mode Indicator */
+.recovery-mode-indicator {
+    background-color: #003366;
+    border: 2px solid #0066FF;
+    color: #66CCFF;
+    padding: 10px 15px;
+    margin: 15px 0;
+    text-align: center;
+    font-weight: bold;
+}
+
 .content {
     margin: 30px 0;
 }
@@ -98,6 +109,28 @@ h2 {
     display: inline-block;
 }
 
+.home-button {
+    background-color: #000000;
+    color: #00FF00;
+    border: 2px solid #00FF00;
+    padding: 15px 20px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-block;
+    line-height: 1.6;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+.home-button:hover {
+    background-color: #00FF00;
+    color: #000000;
+}
+
 .reset-button {
     background-color: #000000;
     color: #FF0000;
@@ -108,6 +141,9 @@ h2 {
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
+    line-height: 1.6;
+    box-sizing: border-box;
+    vertical-align: middle;
 }
 
 .reset-button:hover {
@@ -139,10 +175,35 @@ h2 {
     background-color: #001a00;
 }
 
+/* Highlighted Row (when user gets question wrong) */
+.fact-table tr.highlight-row {
+    background-color: #2a3300;
+    position: relative;
+    animation: pulseBorder 2s ease-in-out infinite;
+}
+
+.fact-table tr.highlight-row td {
+    color: #CCFF00;
+    font-weight: bold;
+    border-color: #CCFF00;
+}
+
+@keyframes pulseBorder {
+    0%, 100% {
+        box-shadow: 0 0 5px #CCFF00, inset 0 0 5px #CCFF00;
+    }
+    50% {
+        box-shadow: 0 0 15px #CCFF00, inset 0 0 10px #CCFF00;
+    }
+}
+
 /* Quiz */
 .quiz-controls {
     margin: 20px 0;
-    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
 }
 
 .question {
@@ -251,7 +312,9 @@ h2 {
 
     .domain-button,
     .option-button,
-    .action-button {
+    .action-button,
+    .home-button,
+    .reset-button {
         font-size: 14px;
         padding: 12px 15px;
     }

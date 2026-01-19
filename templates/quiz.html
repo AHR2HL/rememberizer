@@ -18,10 +18,19 @@
             <p>Facts: {{ domain.id | progress_string }}</p>
         </div>
 
+        {% if session.get("doom_loop_active") %}
+        <div class="recovery-mode-indicator">
+            <p>RECOVERY MODE - Focus on building confidence</p>
+        </div>
+        {% endif %}
+
         <div class="content">
             <h2>&gt; QUIZ</h2>
 
             <div class="quiz-controls">
+                <a href="{{ url_for('index') }}" class="home-button">
+                    [HOME]
+                </a>
                 <form method="POST" action="{{ url_for('reset_domain') }}" class="reset-form">
                     <button type="submit" class="reset-button">
                         [RESET PROGRESS]

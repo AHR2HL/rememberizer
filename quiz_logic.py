@@ -195,6 +195,60 @@ def get_identifying_field(fact, domain):
     return (first_field, fact_data[first_field])
 
 
+def format_field_name(field_name):
+    """
+    Format a field name for display in questions.
+
+    Replaces underscores with spaces.
+
+    Args:
+        field_name: Raw field name (e.g., "western_event")
+
+    Returns:
+        str: Formatted field name (e.g., "western event")
+    """
+    return field_name.replace("_", " ")
+
+
+def is_plural_field(field_name):
+    """
+    Determine if a field name represents a plural concept.
+
+    Used to choose between "What is" and "What are" in questions.
+
+    Args:
+        field_name: Raw field name (e.g., "years", "symbol")
+
+    Returns:
+        bool: True if field should use "What are", False if "What is"
+    """
+    # Known plural field names (common across domains)
+    plural_fields = {
+        "years",
+        "dates",
+        "events",
+        "symbols",
+        "attributes",
+        "domains",
+        "powers",
+        "abilities",
+        "characteristics",
+        "features",
+    }
+
+    # Check if exact match
+    field_lower = field_name.lower()
+    if field_lower in plural_fields:
+        return True
+
+    # Check if field contains a plural word
+    for plural_word in plural_fields:
+        if plural_word in field_lower:
+            return True
+
+    return False
+
+
 def generate_question(fact, context_field, quiz_field, all_facts, domain):
     """
     Generate a multiple-choice question connecting two fields.
@@ -216,25 +270,43 @@ def generate_question(fact, context_field, quiz_field, all_facts, domain):
     field_names = domain.get_field_names()
     identifying_field = field_names[0]  # Usually "name"
 
+    # Format field names for display
+    formatted_context_field = format_field_name(context_field)
+    formatted_quiz_field = format_field_name(quiz_field)
+
+    # Determine if quiz field is plural (for "What is" vs "What are")
+    is_plural = is_plural_field(quiz_field)
+    what_verb = "What are" if is_plural else "What is"
+
     # Generate question text based on which fields are being used
     if context_field == identifying_field:
         # Context is name: "What is the symbol of Erato?"
-        question = f"What is the {quiz_field} of {context_value}?"
+        # or "What are the years of Han Dynasty?"
+        question = f"{what_verb} the {formatted_quiz_field} of {context_value}?"
     elif quiz_field == identifying_field:
         # Quiz is name: "Which muse has Lyre as their symbol?"
         domain_name = domain.name if hasattr(domain, "name") else "item"
         domain_singular = singularize_domain_name(domain_name).lower()
         question = (
-            f"Which {domain_singular} has {context_value} as their {context_field}?"
+            f"Which {domain_singular} has {context_value} "
+            f"as their {formatted_context_field}?"
         )
     else:
         # Neither is name: "What is domain of Greek Muse with symbol=Lyre?"
         domain_name = domain.name if hasattr(domain, "name") else "item"
         domain_singular = singularize_domain_name(domain_name).lower()
-        question = (
-            f"What is the {quiz_field} of the {domain_singular} "
-            f"with {context_field} = {context_value}?"
-        )
+
+        # Handle "None" values specially
+        if context_value == "None":
+            question = (
+                f"{what_verb} the {formatted_quiz_field} of the {domain_singular} "
+                f"without a {formatted_context_field}?"
+            )
+        else:
+            question = (
+                f"{what_verb} the {formatted_quiz_field} of the {domain_singular} "
+                f"with {formatted_context_field} = {context_value}?"
+            )
 
     # Collect wrong answers from quiz_field
     wrong_answers = []
