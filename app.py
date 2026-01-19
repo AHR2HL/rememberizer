@@ -30,13 +30,27 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Initialize database
 db.init_app(app)
 
+# Flag to track if database has been initialized
+_db_initialized = False
+
 
 def init_database():
     """Initialize database and load fact domains."""
+    global _db_initialized
+    if _db_initialized:
+        return
+
     with app.app_context():
         db.create_all()
         # Load all JSON files from facts directory
         load_all_domains_from_directory("facts")
+        _db_initialized = True
+
+
+@app.before_request
+def ensure_database():
+    """Ensure database is initialized before first request."""
+    init_database()
 
 
 @app.route("/")
@@ -117,13 +131,19 @@ def quiz():
     if not domain_id:
         return redirect(url_for("index"))
 
+    # Increment question count BEFORE generating question
+    # This ensures every question asked counts toward the total
+    question_count += 1
+    session["question_count"] = question_count
+
     # Check if we have a pending fact that needs 2 consecutive correct
     pending_fact_id = session.get("pending_quiz_fact_id")
+    last_question_key = session.get("last_question_key")
 
     if pending_fact_id and not has_two_consecutive_correct(pending_fact_id):
         # Continue quizzing this fact until 2 consecutive correct
         fact = Fact.query.get(pending_fact_id)
-        question_data = prepare_quiz_question_for_fact(fact, domain_id)
+        question_data = prepare_quiz_question_for_fact(fact, domain_id, last_question_key)
     else:
         # Clear pending fact
         if pending_fact_id:
@@ -141,15 +161,16 @@ def quiz():
             else:
                 return "All facts mastered! Great job!", 200
 
-        question_data = prepare_quiz_question_for_fact(fact, domain_id)
+        question_data = prepare_quiz_question_for_fact(fact, domain_id, last_question_key)
 
     if not question_data:
         return "Error generating question", 400
 
     # Store current question data in session
     session["current_fact_id"] = question_data["fact_id"]
-    session["current_field_name"] = question_data["field_name"]
+    session["current_field_name"] = question_data["quiz_field"]
     session["correct_index"] = question_data["correct_index"]
+    session["last_question_key"] = f"{question_data['fact_id']}:{question_data['context_field']}:{question_data['quiz_field']}"
 
     domain = Domain.query.get(domain_id)
 
@@ -198,8 +219,8 @@ def answer():
             # Clear pending quiz fact
             session.pop("pending_quiz_fact_id", None)
 
-        # Increment question count
-        session["question_count"] = question_count + 1
+        # Note: question_count is now incremented in /quiz route
+        # This ensures count increments on every question, not just correct answers
 
         # Go to next quiz question
         return redirect(url_for("quiz"))
