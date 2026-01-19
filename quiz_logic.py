@@ -20,8 +20,10 @@ def select_next_fact(domain_id, question_count):
 
     Priority:
     1. If unlearned facts exist, return None (should show fact first, not quiz)
-    2. Every 3rd question: select random mastered fact for reinforcement
+    2. Every 10th question: select random mastered fact for reinforcement
     3. Otherwise: select learned (not mastered) least-practiced fact
+
+    Note: Per-fact review questions are handled in app.py routes.
 
     Args:
         domain_id: ID of the domain
@@ -35,8 +37,9 @@ def select_next_fact(domain_id, question_count):
     if unlearned:
         return None  # Signal that we need to show a fact first
 
-    # Reinforcement: every 3rd question, quiz mastered fact
-    if question_count > 0 and question_count % 3 == 0:
+    # Additional reinforcement: every 10th question, quiz mastered fact
+    # (supplement to per-fact review in app.py)
+    if question_count > 0 and question_count % 10 == 0:
         mastered = get_mastered_facts(domain_id)
         if mastered:
             return random.choice(mastered)
@@ -157,7 +160,11 @@ def singularize_domain_name(domain_name):
     elif last_word.endswith("sses") and len(last_word) > 4:
         # Glasses -> Glass, Bosses -> Boss
         words[-1] = last_word[:-2]
-    elif last_word.endswith("ses") and len(last_word) > 3 and not last_word[-4].lower() in "aeiou":
+    elif (
+        last_word.endswith("ses")
+        and len(last_word) > 3
+        and not last_word[-4].lower() in "aeiou"
+    ):
         # Bases -> Base, Vases -> Vase (consonant before "ses")
         words[-1] = last_word[:-2]
     elif last_word.endswith("s") and not last_word.endswith("ss"):
@@ -215,12 +222,14 @@ def generate_question(fact, context_field, quiz_field, all_facts, domain):
         question = f"What is the {quiz_field} of {context_value}?"
     elif quiz_field == identifying_field:
         # Quiz is name: "Which muse has Lyre as their symbol?"
-        domain_name = domain.name if hasattr(domain, 'name') else "item"
+        domain_name = domain.name if hasattr(domain, "name") else "item"
         domain_singular = singularize_domain_name(domain_name).lower()
-        question = f"Which {domain_singular} has {context_value} as their {context_field}?"
+        question = (
+            f"Which {domain_singular} has {context_value} as their {context_field}?"
+        )
     else:
         # Neither is name: "What is the domain of the Greek Muse with symbol = Lyre?"
-        domain_name = domain.name if hasattr(domain, 'name') else "item"
+        domain_name = domain.name if hasattr(domain, "name") else "item"
         domain_singular = singularize_domain_name(domain_name).lower()
         question = f"What is the {quiz_field} of the {domain_singular} with {context_field} = {context_value}?"
 
@@ -302,7 +311,9 @@ def prepare_quiz_question(domain_id, question_count, last_question_key=None):
             break
 
     # Generate question
-    question_data = generate_question(fact, context_field, quiz_field, all_facts, domain)
+    question_data = generate_question(
+        fact, context_field, quiz_field, all_facts, domain
+    )
 
     # Add fact and field info
     question_data["fact_id"] = fact.id
@@ -384,7 +395,9 @@ def prepare_quiz_question_for_fact(fact, domain_id, last_question_key=None):
             break
 
     # Generate question
-    question_data = generate_question(fact, context_field, quiz_field, all_facts, domain)
+    question_data = generate_question(
+        fact, context_field, quiz_field, all_facts, domain
+    )
 
     # Add fact and field info
     question_data["fact_id"] = fact.id

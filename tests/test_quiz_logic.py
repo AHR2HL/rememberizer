@@ -49,7 +49,7 @@ def test_select_next_fact_returns_learned_not_mastered(app, populated_db):
 
 
 def test_select_next_fact_reinforcement_question(app, populated_db):
-    """Test selecting mastered fact on every 3rd question."""
+    """Test selecting mastered fact on every 10th question."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
 
@@ -61,8 +61,8 @@ def test_select_next_fact_reinforcement_question(app, populated_db):
         for i in range(7):
             record_attempt(facts[0].id, "name", True)
 
-        # Question 3 should select mastered fact for reinforcement
-        fact = select_next_fact(populated_db.id, 3)
+        # Question 10 should select mastered fact for reinforcement
+        fact = select_next_fact(populated_db.id, 10)
         assert fact.id == facts[0].id
 
 
@@ -76,7 +76,7 @@ def test_select_next_fact_reinforcement_no_mastered(app, populated_db):
             mark_fact_learned(fact.id)
 
         # No mastered facts, should return a learned fact
-        fact = select_next_fact(populated_db.id, 3)
+        fact = select_next_fact(populated_db.id, 10)
         assert fact is not None
 
 
@@ -133,7 +133,9 @@ def test_generate_question(app, populated_db):
         fact = Fact.query.first()
         all_facts = Fact.query.filter_by(domain_id=populated_db.id).all()
 
-        question_data = generate_question(fact, "name", "category", all_facts, populated_db)
+        question_data = generate_question(
+            fact, "name", "category", all_facts, populated_db
+        )
 
         assert "question" in question_data
         assert "options" in question_data
@@ -189,7 +191,9 @@ def test_generate_question_shuffles_options(app, populated_db):
         # Generate multiple questions and check if options vary in position
         correct_indices = []
         for i in range(10):
-            question_data = generate_question(fact, "name", "category", all_facts, populated_db)
+            question_data = generate_question(
+                fact, "name", "category", all_facts, populated_db
+            )
             correct_indices.append(question_data["correct_index"])
 
         # With shuffling, correct answer shouldn't always be at same index
@@ -360,12 +364,16 @@ def test_generate_question_bidirectional(app, populated_db):
         all_facts = Fact.query.filter_by(domain_id=populated_db.id).all()
 
         # Test name -> category direction
-        question_data1 = generate_question(fact, "name", "category", all_facts, populated_db)
+        question_data1 = generate_question(
+            fact, "name", "category", all_facts, populated_db
+        )
         assert "question" in question_data1
         assert len(question_data1["options"]) == 4
 
         # Test category -> name direction
-        question_data2 = generate_question(fact, "category", "name", all_facts, populated_db)
+        question_data2 = generate_question(
+            fact, "category", "name", all_facts, populated_db
+        )
         assert "question" in question_data2
         assert len(question_data2["options"]) == 4
 
@@ -394,7 +402,9 @@ def test_prepare_quiz_question_avoids_consecutive_duplicate(app, populated_db):
             # Should generate different field pair
             different_count = 0
             for i in range(10):
-                question_data2 = prepare_quiz_question_for_fact(fact, populated_db.id, last_key)
+                question_data2 = prepare_quiz_question_for_fact(
+                    fact, populated_db.id, last_key
+                )
                 current_key = f"{question_data2['fact_id']}:{question_data2['context_field']}:{question_data2['quiz_field']}"
                 if current_key != last_key:
                     different_count += 1
@@ -414,7 +424,9 @@ def test_prepare_quiz_question_for_fact_with_last_question_key(app, populated_db
             fields = list(fact_data.keys())
             last_key = f"{fact.id}:{fields[0]}:{fields[1]}"
 
-            question_data = prepare_quiz_question_for_fact(fact, populated_db.id, last_key)
+            question_data = prepare_quiz_question_for_fact(
+                fact, populated_db.id, last_key
+            )
 
             assert question_data is not None
             current_key = f"{question_data['fact_id']}:{question_data['context_field']}:{question_data['quiz_field']}"
@@ -464,7 +476,11 @@ def test_generate_question_uses_domain_name(app, populated_db):
             non_name_fields = [f for f in fields if f != "name"]
             if len(non_name_fields) >= 2:
                 question_data = generate_question(
-                    fact, non_name_fields[0], non_name_fields[1], all_facts, populated_db
+                    fact,
+                    non_name_fields[0],
+                    non_name_fields[1],
+                    all_facts,
+                    populated_db,
                 )
 
                 # Should contain singularized domain name, NOT "item"

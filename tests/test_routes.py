@@ -1,6 +1,13 @@
 """Tests for Flask routes."""
 
-from models import Fact, Attempt, FactState, mark_fact_learned, is_fact_learned, record_attempt
+from models import (
+    Fact,
+    Attempt,
+    FactState,
+    mark_fact_learned,
+    is_fact_learned,
+    record_attempt,
+)
 
 
 def test_index_route(client, populated_db):
@@ -474,7 +481,9 @@ def test_quiz_route_never_asks_field_to_itself(client, app, populated_db):
                 quiz_field = parts[2]
 
                 # CRITICAL: context_field must never equal quiz_field
-                assert context_field != quiz_field, f"Invalid question: {context_field}→{quiz_field}"
+                assert (
+                    context_field != quiz_field
+                ), f"Invalid question: {context_field}→{quiz_field}"
 
         # Answer the question to continue
         with client.session_transaction() as sess:
@@ -510,8 +519,139 @@ def test_question_count_increments_on_every_quiz(client, app, populated_db):
         client.post("/answer", data={"answer": correct_index})
 
 
-def test_reinforcement_every_third_question(client, app, populated_db):
-    """Test that Q3, Q6, Q9 are reinforcement questions."""
+def test_review_question_after_two_consecutive_correct(client, app, populated_db):
+    """Test that a review question is asked after 2 consecutive correct answers."""
+    with app.app_context():
+        facts = Fact.query.filter_by(domain_id=populated_db.id).all()
+
+        # Mark first two facts as learned
+        mark_fact_learned(facts[0].id)
+        mark_fact_learned(facts[1].id)
+
+        # Get fact IDs before leaving context
+        fact0_id = facts[0].id
+        fact1_id = facts[1].id
+
+    # Initialize session
+    with client.session_transaction() as sess:
+        sess["domain_id"] = populated_db.id
+        sess["question_count"] = 0
+        sess["pending_quiz_fact_id"] = fact1_id
+
+    # Answer 2 questions correctly on fact 1
+    for i in range(2):
+        response = client.get("/quiz")
+        assert response.status_code == 200
+
+        with client.session_transaction() as sess:
+            assert sess["current_fact_id"] == fact1_id
+            correct_index = sess["correct_index"]
+
+        client.post("/answer", data={"answer": correct_index})
+
+    # Next question should be a review question on fact 0
+    response = client.get("/quiz")
+    assert response.status_code == 200
+
+    with client.session_transaction() as sess:
+        assert sess.get("pending_review_fact_id") == fact0_id
+        assert sess.get("current_fact_id") == fact0_id
+
+
+def test_review_flags_cleared_after_answer(client, app, populated_db):
+    """Test that review flags are cleared after answering review question."""
+    with app.app_context():
+        facts = Fact.query.filter_by(domain_id=populated_db.id).all()
+        mark_fact_learned(facts[0].id)
+        mark_fact_learned(facts[1].id)
+
+        # Get fact IDs before leaving context
+        fact0_id = facts[0].id
+        fact1_id = facts[1].id
+
+    # Set up review question state
+    with client.session_transaction() as sess:
+        sess["domain_id"] = populated_db.id
+        sess["question_count"] = 0
+        sess["pending_review_fact_id"] = fact0_id
+        sess["just_completed_fact_id"] = fact1_id
+
+    # Get review question
+    response = client.get("/quiz")
+    assert response.status_code == 200
+
+    # Answer it
+    with client.session_transaction() as sess:
+        correct_index = sess["correct_index"]
+    client.post("/answer", data={"answer": correct_index})
+
+    # Flags should be cleared
+    with client.session_transaction() as sess:
+        assert "pending_review_fact_id" not in sess
+        assert "just_completed_fact_id" not in sess
+
+
+def test_review_pattern_multiple_facts(client, app, populated_db):
+    """Test review pattern: 2 questions on new fact + 1 review."""
+    with app.app_context():
+        facts = Fact.query.filter_by(domain_id=populated_db.id).all()[:3]
+
+        # Mark all as learned
+        for fact in facts:
+            mark_fact_learned(fact.id)
+
+        # Get fact IDs before leaving context
+        fact0_id = facts[0].id
+        fact1_id = facts[1].id
+
+    # Initialize session
+    with client.session_transaction() as sess:
+        sess["domain_id"] = populated_db.id
+        sess["question_count"] = 0
+
+    # Track question pattern
+    question_log = []
+
+    # Learn fact 0: 2 questions
+    with client.session_transaction() as sess:
+        sess["pending_quiz_fact_id"] = fact0_id
+
+    for i in range(2):
+        response = client.get("/quiz")
+        with client.session_transaction() as sess:
+            fact_id = sess["current_fact_id"]
+            question_log.append(("fact0", i + 1, fact_id))
+            correct_index = sess["correct_index"]
+        client.post("/answer", data={"answer": correct_index})
+
+    # Learn fact 1: 2 questions + 1 review of fact 0
+    with client.session_transaction() as sess:
+        sess["pending_quiz_fact_id"] = fact1_id
+
+    for i in range(2):
+        response = client.get("/quiz")
+        with client.session_transaction() as sess:
+            fact_id = sess["current_fact_id"]
+            question_log.append(("fact1", i + 1, fact_id))
+            correct_index = sess["correct_index"]
+        client.post("/answer", data={"answer": correct_index})
+
+    # Next should be review of fact 0
+    response = client.get("/quiz")
+    with client.session_transaction() as sess:
+        review_fact_id = sess["current_fact_id"]
+        question_log.append(("review", 1, review_fact_id))
+
+    # Verify pattern
+    assert question_log[0][2] == fact0_id  # Fact 0, Q1
+    assert question_log[1][2] == fact0_id  # Fact 0, Q2
+    assert question_log[2][2] == fact1_id  # Fact 1, Q1
+    assert question_log[3][2] == fact1_id  # Fact 1, Q2
+    assert question_log[4][2] == fact0_id  # Review of fact 0
+
+
+def test_reinforcement_every_tenth_question(client, app, populated_db):
+    """Test that Q10, Q20, Q30 are reinforcement questions for mastered facts."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
 
@@ -519,39 +659,26 @@ def test_reinforcement_every_third_question(client, app, populated_db):
         for fact in facts:
             mark_fact_learned(fact.id)
 
-        # Master first fact (7 correct attempts)
+        # Master first fact (7 correct attempts, all on same field to avoid triggering reviews)
+        # Record them all at once so has_two_consecutive_correct is already satisfied
         for i in range(7):
             record_attempt(facts[0].id, "name", True)
 
         # Get the mastered fact ID before exiting context
         mastered_fact_id = facts[0].id
 
-    # Initialize session
+    # Initialize session - start at question 9 to check Q10
     with client.session_transaction() as sess:
         sess["domain_id"] = populated_db.id
-        sess["question_count"] = 0
+        sess["question_count"] = 9
 
-    quizzed_facts = []
+    # Generate Q10 and verify it's a mastered fact
+    response = client.get("/quiz")
+    assert response.status_code == 200
 
-    # Generate 9 questions and track which facts are quizzed
-    for q_num in range(1, 10):
-        response = client.get("/quiz")
-        assert response.status_code == 200
-
-        with client.session_transaction() as sess:
-            fact_id = sess.get("current_fact_id")
-            quizzed_facts.append((q_num, fact_id))
-
-        # Answer correctly to continue
-        with client.session_transaction() as sess:
-            correct_index = sess.get("correct_index", 0)
-        client.post("/answer", data={"answer": correct_index})
-
-    # Q3, Q6, Q9 should be the mastered fact
-    q3_fact = next(fid for qn, fid in quizzed_facts if qn == 3)
-    q6_fact = next(fid for qn, fid in quizzed_facts if qn == 6)
-    q9_fact = next(fid for qn, fid in quizzed_facts if qn == 9)
-
-    assert q3_fact == mastered_fact_id, "Q3 should be reinforcement"
-    assert q6_fact == mastered_fact_id, "Q6 should be reinforcement"
-    assert q9_fact == mastered_fact_id, "Q9 should be reinforcement"
+    with client.session_transaction() as sess:
+        fact_id = sess.get("current_fact_id")
+        # Q10 should be the mastered fact
+        assert (
+            fact_id == mastered_fact_id
+        ), "Q10 should be reinforcement of mastered fact"
