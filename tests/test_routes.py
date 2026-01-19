@@ -685,3 +685,27 @@ def test_reinforcement_every_tenth_question(client, app, populated_db):
         assert (
             fact_id == mastered_fact_id
         ), "Q10 should be reinforcement of mastered fact"
+
+
+def test_quiz_page_box_rendering(client, app, populated_db):
+    """Test that quiz page renders box correctly."""
+    with app.app_context():
+        with client.session_transaction() as sess:
+            sess["domain_id"] = populated_db.id
+            sess["question_count"] = 0
+
+        fact = Fact.query.first()
+        mark_fact_learned(fact.id)
+
+        response = client.get("/quiz", follow_redirects=True)
+        assert response.status_code == 200
+        assert b"\xe2\x95\x94" in response.data  # ╔
+        assert populated_db.name.upper().encode() in response.data
+
+
+def test_select_domain_box_rendering(client, populated_db):
+    """Test that select domain page renders box correctly."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert b"REMEMBERIZER v1.0" in response.data
+    assert b"\xe2\x95\x94" in response.data  # ╔

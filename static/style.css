@@ -30,6 +30,7 @@ body {
     font-size: 18px;
     font-weight: normal;
     line-height: 1.2;
+    white-space: pre;
 }
 
 .content {
