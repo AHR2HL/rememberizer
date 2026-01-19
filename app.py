@@ -30,13 +30,27 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Initialize database
 db.init_app(app)
 
+# Flag to track if database has been initialized
+_db_initialized = False
+
 
 def init_database():
     """Initialize database and load fact domains."""
+    global _db_initialized
+    if _db_initialized:
+        return
+
     with app.app_context():
         db.create_all()
         # Load all JSON files from facts directory
         load_all_domains_from_directory("facts")
+        _db_initialized = True
+
+
+@app.before_request
+def ensure_database():
+    """Ensure database is initialized before first request."""
+    init_database()
 
 
 @app.route("/")
@@ -117,15 +131,51 @@ def quiz():
     if not domain_id:
         return redirect(url_for("index"))
 
+    # Increment question count BEFORE generating question
+    # This ensures every question asked counts toward the total
+    question_count += 1
+    session["question_count"] = question_count
+
     # Check if we have a pending fact that needs 2 consecutive correct
     pending_fact_id = session.get("pending_quiz_fact_id")
+    last_question_key = session.get("last_question_key")
 
+    # Check for pending quiz fact (needs 2 consecutive correct)
     if pending_fact_id and not has_two_consecutive_correct(pending_fact_id):
         # Continue quizzing this fact until 2 consecutive correct
         fact = Fact.query.get(pending_fact_id)
-        question_data = prepare_quiz_question_for_fact(fact, domain_id)
+        question_data = prepare_quiz_question_for_fact(
+            fact, domain_id, last_question_key
+        )
+
+    # Check for pending review fact
+    elif session.get("pending_review_fact_id"):
+        review_fact_id = session.get("pending_review_fact_id")
+        fact = Fact.query.get(review_fact_id)
+
+        if fact:
+            question_data = prepare_quiz_question_for_fact(
+                fact, domain_id, last_question_key
+            )
+        else:
+            # Review fact not found, clear flag and continue
+            session.pop("pending_review_fact_id", None)
+            session.pop("just_completed_fact_id", None)
+            fact = select_next_fact(domain_id, question_count)
+            if fact is None:
+                next_unlearned = get_next_unlearned_fact(domain_id)
+                if next_unlearned:
+                    mark_fact_shown(next_unlearned.id)
+                    return redirect(url_for("show_fact", fact_id=next_unlearned.id))
+                else:
+                    return "All facts mastered! Great job!", 200
+            question_data = prepare_quiz_question_for_fact(
+                fact, domain_id, last_question_key
+            )
+
+    # Normal fact selection
     else:
-        # Clear pending fact
+        # Clear pending fact if it exists
         if pending_fact_id:
             session.pop("pending_quiz_fact_id", None)
 
@@ -141,15 +191,21 @@ def quiz():
             else:
                 return "All facts mastered! Great job!", 200
 
-        question_data = prepare_quiz_question_for_fact(fact, domain_id)
+        question_data = prepare_quiz_question_for_fact(
+            fact, domain_id, last_question_key
+        )
 
     if not question_data:
         return "Error generating question", 400
 
     # Store current question data in session
     session["current_fact_id"] = question_data["fact_id"]
-    session["current_field_name"] = question_data["field_name"]
+    session["current_field_name"] = question_data["quiz_field"]
     session["correct_index"] = question_data["correct_index"]
+    fact_id = question_data["fact_id"]
+    context = question_data["context_field"]
+    quiz = question_data["quiz_field"]
+    session["last_question_key"] = f"{fact_id}:{context}:{quiz}"
 
     domain = Domain.query.get(domain_id)
 
@@ -173,7 +229,10 @@ def answer():
     fact_id = session.get("current_fact_id")
     field_name = session.get("current_field_name")
     correct_index = session.get("correct_index")
-    question_count = session.get("question_count", 0)
+    domain_id = session.get("domain_id")
+
+    # Check if this was a review question
+    is_review_question = fact_id == session.get("pending_review_fact_id")
 
     if fact_id is None or field_name is None or correct_index is None:
         return redirect(url_for("index"))
@@ -192,14 +251,34 @@ def answer():
         mark_fact_shown(fact_id)
         return redirect(url_for("show_fact", fact_id=fact_id))
 
+    # If this was a review question, clear the review flags
+    if is_review_question:
+        session.pop("pending_review_fact_id", None)
+        session.pop("just_completed_fact_id", None)
+        # Go to next quiz question (which will select next new fact)
+        return redirect(url_for("quiz"))
+
     if is_correct:
         # Check if achieved 2 consecutive correct
         if has_two_consecutive_correct(fact_id):
             # Clear pending quiz fact
             session.pop("pending_quiz_fact_id", None)
 
-        # Increment question count
-        session["question_count"] = question_count + 1
+            # Set up review question
+            from models import get_learned_facts
+            import random
+
+            learned_facts = get_learned_facts(domain_id)
+            eligible_for_review = [f for f in learned_facts if f.id != fact_id]
+
+            if eligible_for_review:
+                # Select random fact for review
+                review_fact = random.choice(eligible_for_review)
+                session["pending_review_fact_id"] = review_fact.id
+                session["just_completed_fact_id"] = fact_id
+
+        # Note: question_count is now incremented in /quiz route
+        # This ensures count increments on every question, not just correct answers
 
         # Go to next quiz question
         return redirect(url_for("quiz"))

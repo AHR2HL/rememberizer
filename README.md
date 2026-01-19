@@ -2,15 +2,22 @@
 
 A terminal-styled Flask web application for quizzing students on facts with spaced repetition and mastery tracking.
 
-## Latest Updates (v2.0)
+## Latest Updates (v2.1)
 
-The app now features a comprehensive **three-state learning system** with intelligent progression tracking:
+The app now features enhanced question generation and automatic database setup:
+- ✅ **Automatic database initialization** - No manual setup required!
+- ✅ **Smart domain name singularization** - Questions now say "Greek Muse" instead of "item"
+- ✅ **Fixed spaced repetition timing** - Q3, Q6, Q9... are now predictably reinforcement questions
+- ✅ 92 tests (up from 79) with 98% code coverage
+
+### Previous Updates (v2.0)
+
+- ✅ Comprehensive **three-state learning system** with intelligent progression tracking
 - ✅ Facts must be shown to users before quizzing (prevents "cold quizzing")
 - ✅ Requires 2 consecutive correct answers before moving to next fact
 - ✅ Automatically demotes facts to unlearned after 2 consecutive wrong answers
 - ✅ Progress reset buttons for quick restarts
 - ✅ New `fact_states` table tracks learning progression
-- ✅ 79 tests (up from 56) with 98% code coverage
 
 ## Features
 
@@ -54,6 +61,8 @@ This will add the new table without affecting your existing data.
 python app.py
 ```
 
+The database will be automatically initialized on first run! No manual setup needed.
+
 2. Open your browser to `http://localhost:5000`
 
 3. Select a fact domain from the list
@@ -61,6 +70,16 @@ python app.py
 4. Review facts and answer quiz questions
 
 5. Use the **[RESET]** button next to any domain to clear progress for that domain
+
+### Manual Database Initialization (Optional)
+
+If you prefer to initialize the database manually before starting the app:
+
+```bash
+python init_db.py
+```
+
+This is optional - the database initializes automatically on first request.
 
 ## Project Structure
 
@@ -70,8 +89,10 @@ rememberizer/
 ├── models.py                    # SQLite database models & learning state logic
 ├── quiz_logic.py                # Quiz generation & fact selection
 ├── facts_loader.py              # JSON fact loading & validation
+├── init_db.py                   # Manual database initialization script (optional)
 ├── migration_add_fact_states.py # Database migration script
-├── database.db                  # SQLite database (created on first run)
+├── instance/                    # Flask instance folder (auto-created)
+│   └── database.db              # SQLite database (auto-initialized on first run)
 ├── requirements.txt             # Python dependencies
 ├── requirements-dev.txt         # Development dependencies
 ├── pytest.ini                   # Pytest configuration
@@ -232,9 +253,9 @@ Facts progress through three states:
 - **State updates**: Records attempts and updates consecutive counters on each answer
 
 ### Testing
-- **79 comprehensive tests**: Cover all state transitions and edge cases
+- **92 comprehensive tests**: Cover all state transitions, edge cases, and new features
 - **98% code coverage**: High coverage across all modules
-- **Integration tests**: Full quiz flow tests including demotion and reset scenarios
+- **Integration tests**: Full quiz flow tests including demotion, reset, and spaced repetition scenarios
 
 ## License
 
@@ -242,11 +263,11 @@ MIT
 
 ## Test Results
 
-All 79 tests pass:
+All 92 tests pass:
 - 16 tests for facts_loader.py
-- 30 tests for models.py (including 16 new FactState tests)
-- 15 tests for quiz_logic.py (updated for learned state logic)
-- 18 tests for Flask routes (including demotion and reset flows)
+- 30 tests for models.py (including FactState tests)
+- 24 tests for quiz_logic.py (including domain name singularization tests)
+- 32 tests for Flask routes (including spaced repetition timing tests)
 
 Code coverage: 98% overall
 Code is formatted with Black and passes Flake8 style checks with 0 violations.
