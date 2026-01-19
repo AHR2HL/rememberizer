@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Student: {{ student.first_name }} {{ student.last_name }}{% endblock %}
+
+{% block header_title %}{{ ("STUDENT: " + student.first_name.upper() + " " + student.last_name.upper()) | center_in_box }}{% endblock %}
+
+{% block content %}
+<div class="content">
+    <h2>&gt; PROFILE</h2>
+
+    <div class="info-box">
+        <p><strong>Name:</strong> {{ student.first_name }} {{ student.last_name }}</p>
+        <p><strong>Email:</strong> {{ student.email }}</p>
+        {% if student.last_active %}
+        <p><strong>Last Active:</strong> {{ student.last_active.strftime('%Y-%m-%d %H:%M') }}</p>
+        {% else %}
+        <p><strong>Last Active:</strong> Never</p>
+        {% endif %}
+        <p><strong>Created:</strong> {{ student.created_at.strftime('%Y-%m-%d') }}</p>
+    </div>
+
+    <h2>&gt; ENGAGEMENT METRICS</h2>
+
+    <div class="info-box">
+        <p><strong>Total Questions:</strong> {{ total_questions }}</p>
+        <p><strong>Questions Today:</strong> {{ questions_today }}</p>
+        {% if formatted_time != "0m" %}
+        <p><strong>Total Time Spent:</strong> {{ formatted_time }}</p>
+        {% endif %}
+        {% if session_count > 0 %}
+        <p><strong>Practice Sessions:</strong> {{ session_count }}</p>
+        {% endif %}
+    </div>
+
+    <h2>&gt; DOMAIN PROGRESS</h2>
+
+    <div class="domain-assignment-list">
+        {% for detail in domain_details %}
+        <div class="domain-assignment-item {% if not detail.is_assigned %}domain-unassigned{% endif %}">
+            <div>
+                <strong>{{ detail.domain.name }}</strong>
+                {% if detail.is_assigned %}
+                    <br>
+                    <span style="color: #00AA00;">ASSIGNED</span>
+                    {% if detail.progress %}
+                        <br>
+                        Progress: {{ detail.progress.progress_string }}
+                        <br>
+                        Learned: {{ detail.progress.learned_count }}/{{ detail.progress.total_facts }} |
+                        Mastered: {{ detail.progress.mastered_count }}/{{ detail.progress.total_facts }}
+                        {% if detail.progress.attempt_count > 0 %}
+                        <br>
+                        Attempts: {{ detail.progress.attempt_count }}
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <br>
+                    <span style="color: #666666;">NOT ASSIGNED</span>
+                {% endif %}
+            </div>
+            <div>
+                {% if detail.is_assigned %}
+                    <form method="POST" action="{{ url_for('unassign_domain_from_student', student_id=student.id) }}" style="display: inline;">
+                        <input type="hidden" name="domain_id" value="{{ detail.domain.id }}">
+                        <button type="submit" class="btn-danger" onclick="return confirm('Unassign this domain?');">[UNASSIGN]</button>
+                    </form>
+                    {% if detail.progress and detail.progress.attempt_count > 0 %}
+                    <form method="POST" action="{{ url_for('reset_student_domain_progress', student_id=student.id, domain_id=detail.domain.id) }}" style="display: inline;">
+                        <button type="submit" class="btn-danger" onclick="return confirm('Reset all progress for this domain?');">[RESET PROGRESS]</button>
+                    </form>
+                    {% endif %}
+                {% else %}
+                    <form method="POST" action="{{ url_for('assign_domain_to_student', student_id=student.id) }}" style="display: inline;">
+                        <input type="hidden" name="domain_id" value="{{ detail.domain.id }}">
+                        <button type="submit" class="btn-view">[ASSIGN]</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="button-container">
+        <a href="{{ url_for('teacher_dashboard') }}" class="action-button">[BACK TO DASHBOARD]</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer_text %}Student Detail View{% endblock %}

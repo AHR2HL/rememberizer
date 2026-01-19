@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Rememberizer - Login{% endblock %}
+
+{% block header_title %}{{ "REMEMBERIZER V2.0 AUTH" | center_in_box }}{% endblock %}
+
+{% block content %}
+<div class="content">
+    <h2>&gt; LOGIN</h2>
+
+    <form method="POST" action="{{ url_for('login') }}" class="login-form">
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required autofocus
+                   placeholder="user@example.com" class="form-input">
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required
+                   placeholder="••••••••" class="form-input">
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="submit-button">[LOGIN]</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block footer_text %}Enter your credentials to continue{% endblock %}

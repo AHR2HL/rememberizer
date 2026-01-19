@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Create Teacher{% endblock %}
+
+{% block header_title %}{{ "CREATE NEW TEACHER" | center_in_box }}{% endblock %}
+
+{% block content %}
+<div class="content">
+    <h2>&gt; TEACHER ACCOUNT CREATION</h2>
+
+    <form method="POST" action="{{ url_for('create_teacher') }}" class="create-form">
+        <div class="form-group">
+            <label for="first_name">First Name:</label>
+            <input type="text" id="first_name" name="first_name" required
+                   placeholder="John" class="form-input">
+        </div>
+
+        <div class="form-group">
+            <label for="last_name">Last Name:</label>
+            <input type="text" id="last_name" name="last_name" required
+                   placeholder="Smith" class="form-input">
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required
+                   placeholder="john.smith@school.edu" class="form-input">
+        </div>
+
+        <div class="info-box">
+            <p>The teacher will receive an email with a secure link to set their own password.</p>
+            <p>The setup link will be valid for 7 days.</p>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="submit-button">[CREATE TEACHER]</button>
+            <a href="{{ url_for('admin_dashboard') }}" class="home-button" style="margin-left: 15px;">[CANCEL]</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block footer_text %}Create a new teacher account{% endblock %}

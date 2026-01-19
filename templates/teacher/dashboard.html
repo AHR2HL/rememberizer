@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Dashboard{% endblock %}
+
+{% block header_title %}{{ "TEACHER DASHBOARD" | center_in_box }}{% endblock %}
+
+{% block content %}
+<div class="content">
+    <h2>&gt; MY STUDENTS ({{ student_data|length }})</h2>
+
+    {% if student_data|length == 0 %}
+        <div class="info-box">
+            <p>You haven't created any students yet.</p>
+            <p>Click the button below to create your first student.</p>
+        </div>
+    {% else %}
+        <div class="student-list">
+            {% for data in student_data %}
+            <div class="student-item">
+                <div class="student-header">
+                    <div>
+                        <div class="student-name">{{ data.student.first_name }} {{ data.student.last_name }}</div>
+                        <div class="student-info">Email: {{ data.student.email }}</div>
+                        <div class="student-info">Domains: {{ data.total_domains }}/{{ available_domains|length }}</div>
+                        {% if data.student.last_active %}
+                        <div class="student-info">Last Active: {{ data.student.last_active.strftime('%Y-%m-%d %H:%M') }}</div>
+                        {% else %}
+                        <div class="student-info">Last Active: Never</div>
+                        {% endif %}
+                        <div class="student-info">
+                            Total Questions: {{ data.total_questions }}
+                            {% if data.questions_today > 0 %}
+                            | Today: {{ data.questions_today }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if data.domain_progress|length > 0 %}
+                    <div class="student-progress">
+                        {% for dp in data.domain_progress %}
+                        <div style="margin: 10px 0;">
+                            <strong>{{ dp.domain.name }}:</strong> {{ dp.progress }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="student-info" style="margin-top: 10px;">
+                        No domains assigned yet
+                    </div>
+                {% endif %}
+
+                <div class="student-actions">
+                    <a href="{{ url_for('student_detail', student_id=data.student.id) }}" class="btn-view">[VIEW DETAILS]</a>
+                    <form method="POST" action="{{ url_for('deactivate_student', student_id=data.student.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to deactivate this student?');">
+                        <button type="submit" class="btn-danger">[DEACTIVATE]</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="button-container">
+        <a href="{{ url_for('create_student') }}" class="action-button">[CREATE NEW STUDENT]</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer_text %}Teacher Dashboard - Manage Students{% endblock %}

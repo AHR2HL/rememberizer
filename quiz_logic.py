@@ -14,7 +14,7 @@ from models import (
 )
 
 
-def select_next_fact(domain_id, question_count):
+def select_next_fact(domain_id, question_count, user_id):
     """
     Select the next fact to quiz based on learning state.
 
@@ -28,33 +28,36 @@ def select_next_fact(domain_id, question_count):
     Args:
         domain_id: ID of the domain
         question_count: Current question number (0-indexed)
+        user_id: ID of the user
 
     Returns:
         Fact: The selected Fact object, or None if no learned facts to quiz
     """
     # Check for unlearned facts - don't quiz until shown
-    unlearned = get_unlearned_facts(domain_id)
+    unlearned = get_unlearned_facts(domain_id, user_id)
     if unlearned:
         return None  # Signal that we need to show a fact first
 
     # Additional reinforcement: every 10th question, quiz mastered fact
     # (supplement to per-fact review in app.py)
     if question_count > 0 and question_count % 10 == 0:
-        mastered = get_mastered_facts(domain_id)
+        mastered = get_mastered_facts(domain_id, user_id)
         if mastered:
             return random.choice(mastered)
 
     # Select from learned (but not mastered) facts
-    learned = get_learned_facts(domain_id)
+    learned = get_learned_facts(domain_id, user_id)
     if not learned:
         # All facts are mastered or unlearned
         all_learned = Fact.query.filter_by(domain_id=domain_id).all()
-        learned = [f for f in all_learned if is_fact_learned(f.id)]
+        learned = [f for f in all_learned if is_fact_learned(f.id, user_id)]
         if not learned:
             return None  # No learned facts to quiz
 
     # Select least-practiced learned fact
-    learned_with_counts = [(fact, get_attempt_count(fact.id)) for fact in learned]
+    learned_with_counts = [
+        (fact, get_attempt_count(fact.id, user_id)) for fact in learned
+    ]
     learned_with_counts.sort(key=lambda x: x[1])
     min_attempts = learned_with_counts[0][1]
     least_practiced = [
@@ -342,7 +345,7 @@ def generate_question(fact, context_field, quiz_field, all_facts, domain):
     }
 
 
-def prepare_quiz_question(domain_id, question_count, last_question_key=None):
+def prepare_quiz_question(domain_id, question_count, user_id, last_question_key=None):
     """
     Prepare a complete quiz question for the next fact.
 
@@ -351,6 +354,7 @@ def prepare_quiz_question(domain_id, question_count, last_question_key=None):
     Args:
         domain_id: ID of the domain
         question_count: Current question number
+        user_id: ID of the user
         last_question_key: Optional last question key to avoid duplicate
 
     Returns:
@@ -361,7 +365,7 @@ def prepare_quiz_question(domain_id, question_count, last_question_key=None):
         Returns None if no facts available
     """
     # Select fact
-    fact = select_next_fact(domain_id, question_count)
+    fact = select_next_fact(domain_id, question_count, user_id)
     if not fact:
         return None
 
@@ -398,26 +402,27 @@ def prepare_quiz_question(domain_id, question_count, last_question_key=None):
     return question_data
 
 
-def get_next_unlearned_fact(domain_id):
+def get_next_unlearned_fact(domain_id, user_id):
     """
-    Get the next unlearned fact to display.
+    Get the next unlearned fact to display for a specific user.
 
     Returns the least-recently-shown unlearned fact, or None if all learned.
 
     Args:
         domain_id: ID of the domain
+        user_id: ID of the user
 
     Returns:
         Fact: The next unlearned Fact object, or None if all facts learned
     """
-    unlearned = get_unlearned_facts(domain_id)
+    unlearned = get_unlearned_facts(domain_id, user_id)
     if not unlearned:
         return None
 
     # Return least-recently-shown unlearned fact
     unlearned_with_times = []
     for fact in unlearned:
-        state = FactState.query.filter_by(fact_id=fact.id).first()
+        state = FactState.query.filter_by(fact_id=fact.id, user_id=user_id).first()
         last_shown = state.last_shown_at if state else None
         unlearned_with_times.append((fact, last_shown))
 

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block header_title %}{{ "ADMIN CONTROL PANEL V2.0" | center_in_box }}{% endblock %}
+
+{% block content %}
+<div class="content">
+    <h2>&gt; SYSTEM OVERVIEW</h2>
+
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-value">{{ teacher_count }}</div>
+            <div class="stat-label">Teachers</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ student_count }}</div>
+            <div class="stat-label">Students</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ domain_count }}</div>
+            <div class="stat-label">Domains</div>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <h3>&gt; TEACHER MANAGEMENT</h3>
+
+        {% if teachers %}
+            <div class="student-list">
+                {% for teacher in teachers %}
+                <div class="student-item">
+                    <div class="student-header">
+                        <span class="student-name">[{{ loop.index }}] {{ teacher.get_full_name() }}</span>
+                    </div>
+                    <div class="student-info">
+                        Email: {{ teacher.email }}
+                    </div>
+                    <div class="student-info">
+                        Created: {{ teacher.created_at.strftime('%Y-%m-%d') }}
+                    </div>
+                    <div class="student-info">
+                        Last Active: {% if teacher.last_active %}{{ teacher.last_active.strftime('%Y-%m-%d %H:%M') }}{% else %}Never{% endif %}
+                    </div>
+                    <div class="student-actions">
+                        <form method="POST" action="{{ url_for('deactivate_teacher', teacher_id=teacher.id) }}" style="display: inline;">
+                            <button type="submit" class="btn-danger" onclick="return confirm('Deactivate this teacher?')">
+                                [DEACTIVATE]
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No teachers created yet.</p>
+        {% endif %}
+
+        <div class="button-container">
+            <a href="{{ url_for('create_teacher') }}" class="action-button">[CREATE NEW TEACHER]</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer_text %}Admin Dashboard - Manage Teachers and System{% endblock %}
