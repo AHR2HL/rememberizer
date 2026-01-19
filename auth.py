@@ -6,7 +6,7 @@ Provides Flask-Login integration, password hashing, and role-based access contro
 
 from functools import wraps
 from datetime import datetime
-from flask import redirect, url_for, flash, abort
+from flask import redirect, url_for, abort
 from flask_login import LoginManager, UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -20,7 +20,8 @@ class AuthUser(UserMixin):
     """
     User wrapper class for Flask-Login.
 
-    Flask-Login requires a User class with specific methods (get_id, is_authenticated, etc.).
+    Flask-Login requires a User class with specific methods
+    (get_id, is_authenticated, etc.).
     This wrapper provides those methods while using our database User model.
     """
 

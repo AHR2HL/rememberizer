@@ -434,7 +434,8 @@ def has_two_consecutive_correct(fact_id, user_id):
 
 def reset_domain_progress(domain_id, user_id):
     """
-    Reset all progress for a domain for a specific user (learned status, attempts, mastery).
+    Reset all progress for a domain for a specific user.
+    Clears learned status, attempts, and mastery.
 
     Args:
         domain_id: ID of the domain to reset
@@ -451,7 +452,8 @@ def reset_domain_progress(domain_id, user_id):
 
 def get_progress_string(domain_id, user_id):
     """
-    Generate a progress string showing status of all facts in domain for a specific user.
+    Generate a progress string showing status of all facts in domain
+    for a specific user.
 
     Returns a string of symbols (·-+*) representing fact states:
     · = unlearned (not shown)
@@ -643,7 +645,7 @@ def assign_domain_to_user(user_id, domain_id, assigned_by_id):
     ).first()
 
     if existing:
-        raise ValueError(f"Domain already assigned to user")
+        raise ValueError("Domain already assigned to user")
 
     # Create assignment
     assignment = UserDomainAssignment(
@@ -835,7 +837,7 @@ def get_questions_answered_today(user_id):
     Returns:
         int: Number of attempts today
     """
-    from datetime import datetime, timedelta
+    from datetime import datetime
 
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 

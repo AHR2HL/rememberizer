@@ -1,7 +1,5 @@
 """Tests for role-based authorization."""
 
-import pytest
-
 
 class TestAdminRoutes:
     """Test admin route access control."""
@@ -128,7 +126,7 @@ class TestOrganizationIsolation:
             db.session.add(org2)
             db.session.commit()
 
-            other_student = create_user(
+            create_user(
                 email="other@test.com",
                 password="password123",
                 role="student",
