@@ -282,9 +282,7 @@ def generate_question(fact, context_field, quiz_field, all_facts, domain):
     if context_field == identifying_field:
         # Context is name: "What is the symbol of Erato?"
         # or "What are the years of Han Dynasty?"
-        question = (
-            f"{what_verb} the {formatted_quiz_field} of {context_value}?"
-        )
+        question = f"{what_verb} the {formatted_quiz_field} of {context_value}?"
     elif quiz_field == identifying_field:
         # Quiz is name: "Which muse has Lyre as their symbol?"
         domain_name = domain.name if hasattr(domain, "name") else "item"

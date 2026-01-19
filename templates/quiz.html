@@ -18,6 +18,12 @@
             <p>Facts: {{ domain.id | progress_string }}</p>
         </div>
 
+        {% if session.get("doom_loop_active") %}
+        <div class="recovery-mode-indicator">
+            <p>RECOVERY MODE - Focus on building confidence</p>
+        </div>
+        {% endif %}
+
         <div class="content">
             <h2>&gt; QUIZ</h2>
 

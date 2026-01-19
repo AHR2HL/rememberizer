@@ -120,6 +120,11 @@ def start():
     session["domain_id"] = domain_id
     session["question_count"] = 0
 
+    # Initialize doom loop tracking
+    session["recent_attempts"] = []
+    session["consecutive_correct_in_session"] = 0
+    session["doom_loop_active"] = False
+
     # Get first unlearned fact to show
     next_fact = get_next_unlearned_fact(domain_id)
     if not next_fact:
@@ -184,9 +189,72 @@ def quiz():
     question_count += 1
     session["question_count"] = question_count
 
+    # Check if just entered doom loop and need to start recovery
+    if session.get("doom_loop_active") and not session.get(
+        "doom_loop_recovery_fact_id"
+    ):
+        # Select recovery fact
+        from doom_loop import select_recovery_fact
+
+        # Get recent failed fact IDs to exclude
+        recent = session.get("recent_attempts", [])
+        excluded_ids = [a["fact_id"] for a in recent if not a["correct"]]
+
+        recovery_fact = select_recovery_fact(domain_id, excluded_ids)
+
+        if recovery_fact:
+            session["doom_loop_recovery_fact_id"] = recovery_fact.id
+            session["doom_loop_questions_remaining"] = 2
+
+            # Show the fact display (like re-learning)
+            mark_fact_shown(recovery_fact.id)
+            return redirect(url_for("show_fact", fact_id=recovery_fact.id))
+
     # Check if we have a pending fact that needs 2 consecutive correct
     pending_fact_id = session.get("pending_quiz_fact_id")
     last_question_key = session.get("last_question_key")
+
+    # Check if in doom loop recovery mode (override fact selection)
+    if session.get("doom_loop_active") and session.get("doom_loop_recovery_fact_id"):
+        recovery_fact_id = session["doom_loop_recovery_fact_id"]
+        questions_remaining = session.get("doom_loop_questions_remaining", 0)
+
+        if questions_remaining > 0:
+            # Force quiz on recovery fact
+            fact = Fact.query.get(recovery_fact_id)
+            if fact:
+                question_data = prepare_quiz_question_for_fact(
+                    fact, domain_id, last_question_key
+                )
+
+                # Decrement counter
+                session["doom_loop_questions_remaining"] = questions_remaining - 1
+
+                # Store question data and render
+                if question_data:
+                    session["current_fact_id"] = question_data["fact_id"]
+                    session["current_field_name"] = question_data["quiz_field"]
+                    session["correct_index"] = question_data["correct_index"]
+                    session["correct_answer"] = question_data["correct_answer"]
+                    session["options"] = question_data["options"]
+                    context_field = question_data["context_field"]
+                    quiz_field = question_data["quiz_field"]
+                    session["last_question_key"] = (
+                        f"{fact.id}:{context_field}:{quiz_field}"
+                    )
+
+                    domain = Domain.query.get(domain_id)
+                    return render_template(
+                        "quiz.html",
+                        question=question_data["question"],
+                        options=question_data["options"],
+                        domain=domain,
+                    )
+        else:
+            # Recovery questions complete, clear recovery fact but stay in doom loop
+            session.pop("doom_loop_recovery_fact_id", None)
+            session.pop("doom_loop_questions_remaining", None)
+            # Fall through to normal fact selection
 
     # Check for pending quiz fact (needs 2 consecutive correct)
     if pending_fact_id and not has_two_consecutive_correct(pending_fact_id):
@@ -304,6 +372,37 @@ def answer():
 
     # Record attempt
     record_attempt(fact_id, field_name, is_correct)
+
+    # Update recent attempts (keep last 4) for doom loop detection
+    recent = session.get("recent_attempts", [])
+    recent.append({"fact_id": fact_id, "correct": is_correct})
+    if len(recent) > 4:
+        recent = recent[-4:]  # Keep only last 4
+    session["recent_attempts"] = recent
+
+    # Update consecutive correct in session for doom loop exit detection
+    if is_correct:
+        session["consecutive_correct_in_session"] = (
+            session.get("consecutive_correct_in_session", 0) + 1
+        )
+    else:
+        session["consecutive_correct_in_session"] = 0
+
+    # Check for doom loop trigger (3 out of last 4 wrong)
+    from doom_loop import check_doom_loop_trigger
+
+    if not session.get("doom_loop_active") and check_doom_loop_trigger(recent):
+        session["doom_loop_active"] = True
+        # Recovery will start on next quiz route
+
+    # Check if exiting doom loop (3 consecutive correct)
+    if (
+        session.get("doom_loop_active")
+        and session.get("consecutive_correct_in_session", 0) >= 3
+    ):
+        session["doom_loop_active"] = False
+        session.pop("doom_loop_recovery_fact_id", None)
+        session.pop("doom_loop_questions_remaining", None)
 
     # Update consecutive counters and check for demotion
     demoted = update_consecutive_attempts(fact_id, is_correct)
