@@ -28,6 +28,9 @@
             <h2>&gt; QUIZ</h2>
 
             <div class="quiz-controls">
+                <a href="{{ url_for('index') }}" class="home-button">
+                    [HOME]
+                </a>
                 <form method="POST" action="{{ url_for('reset_domain') }}" class="reset-form">
                     <button type="submit" class="reset-button">
                         [RESET PROGRESS]

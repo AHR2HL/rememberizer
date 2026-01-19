@@ -109,6 +109,28 @@ h2 {
     display: inline-block;
 }
 
+.home-button {
+    background-color: #000000;
+    color: #00FF00;
+    border: 2px solid #00FF00;
+    padding: 15px 20px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-block;
+    line-height: 1.6;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+.home-button:hover {
+    background-color: #00FF00;
+    color: #000000;
+}
+
 .reset-button {
     background-color: #000000;
     color: #FF0000;
@@ -119,6 +141,9 @@ h2 {
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
+    line-height: 1.6;
+    box-sizing: border-box;
+    vertical-align: middle;
 }
 
 .reset-button:hover {
@@ -175,7 +200,10 @@ h2 {
 /* Quiz */
 .quiz-controls {
     margin: 20px 0;
-    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
 }
 
 .question {
@@ -284,7 +312,9 @@ h2 {
 
     .domain-button,
     .option-button,
-    .action-button {
+    .action-button,
+    .home-button,
+    .reset-button {
         font-size: 14px;
         padding: 12px 15px;
     }
