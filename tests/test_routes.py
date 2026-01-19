@@ -110,8 +110,10 @@ def test_answer_route_correct(client, app, populated_db):
             sess["current_fact_id"] = fact.id
             sess["current_field_name"] = "name"
             sess["correct_index"] = 2
+            sess["correct_answer"] = "TestAnswer"
+            sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
 
-        # Submit correct answer
+        # Submit correct answer (index 2 which is "TestAnswer")
         response = client.post("/answer", data={"answer": 2}, follow_redirects=False)
         assert response.status_code == 302
         assert response.location.endswith("/quiz")
@@ -141,8 +143,10 @@ def test_answer_route_incorrect(client, app, populated_db):
             sess["current_fact_id"] = fact.id
             sess["current_field_name"] = "name"
             sess["correct_index"] = 2
+            sess["correct_answer"] = "TestAnswer"
+            sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
 
-        # Submit incorrect answer
+        # Submit incorrect answer (index 1 which is "Wrong2")
         response = client.post("/answer", data={"answer": 1}, follow_redirects=False)
         assert response.status_code == 302
         assert response.location.endswith(f"/show_fact/{fact.id}")
@@ -318,6 +322,8 @@ def test_demotion_flow(client, app, populated_db):
             sess["current_fact_id"] = fact.id
             sess["current_field_name"] = "name"
             sess["correct_index"] = 2
+            sess["correct_answer"] = "TestAnswer"
+            sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
 
         # First wrong answer
         response = client.post("/answer", data={"answer": 1}, follow_redirects=False)
@@ -329,6 +335,8 @@ def test_demotion_flow(client, app, populated_db):
             sess["current_fact_id"] = fact.id
             sess["current_field_name"] = "name"
             sess["correct_index"] = 2
+            sess["correct_answer"] = "TestAnswer"
+            sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
 
         response = client.post("/answer", data={"answer": 1}, follow_redirects=False)
         assert response.status_code == 302
@@ -351,6 +359,8 @@ def test_two_consecutive_correct_flow(client, app, populated_db):
             sess["current_fact_id"] = fact.id
             sess["current_field_name"] = "name"
             sess["correct_index"] = 2
+            sess["correct_answer"] = "TestAnswer"
+            sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
 
         # First correct answer
         response = client.post("/answer", data={"answer": 2}, follow_redirects=False)
@@ -363,6 +373,8 @@ def test_two_consecutive_correct_flow(client, app, populated_db):
             sess["current_fact_id"] = fact.id
             sess["current_field_name"] = "name"
             sess["correct_index"] = 2
+            sess["correct_answer"] = "TestAnswer"
+            sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
 
         response = client.post("/answer", data={"answer": 2}, follow_redirects=False)
         assert response.status_code == 302
@@ -770,3 +782,185 @@ def test_progress_updates_after_answer(client, app, populated_db):
         # Should show *+··· (mastered, learned, unlearned...)
         # This is a basic check - exact encoding may vary
         assert b"Facts:" in response.data
+
+
+def test_review_question_wrong_answer_shows_fact(client, app, populated_db):
+    """Test that wrong answer on review question shows the fact."""
+    with app.app_context():
+        facts = Fact.query.filter_by(domain_id=populated_db.id).all()
+        mark_fact_learned(facts[0].id)
+        mark_fact_learned(facts[1].id)
+
+        fact0_id = facts[0].id
+        fact1_id = facts[1].id
+
+    # Set up review question state
+    with client.session_transaction() as sess:
+        sess["domain_id"] = populated_db.id
+        sess["question_count"] = 0
+        sess["pending_review_fact_id"] = fact0_id
+        sess["just_completed_fact_id"] = fact1_id
+
+    # Get review question
+    response = client.get("/quiz")
+    assert response.status_code == 200
+
+    # Answer it WRONG
+    with client.session_transaction() as sess:
+        correct_answer = sess["correct_answer"]
+        options = sess["options"]
+        # Find a wrong answer (any option that's not the correct answer)
+        wrong_index = None
+        for i, option in enumerate(options):
+            if option != correct_answer:
+                wrong_index = i
+                break
+
+    response = client.post(
+        "/answer", data={"answer": wrong_index}, follow_redirects=False
+    )
+
+    # Should redirect to show_fact, not quiz
+    assert response.status_code == 302
+    assert f"/show_fact/{fact0_id}" in response.location
+
+
+def test_demotion_during_review_clears_flags(client, app, populated_db):
+    """Test that demotion during review clears review flags."""
+    with app.app_context():
+        facts = Fact.query.filter_by(domain_id=populated_db.id).all()
+        mark_fact_learned(facts[0].id)
+        mark_fact_learned(facts[1].id)
+
+        # Give fact 0 one wrong answer (need 2 for demotion)
+        record_attempt(facts[0].id, "name", False)
+
+        fact0_id = facts[0].id
+        fact1_id = facts[1].id
+
+    # Set up review question state for fact 0
+    with client.session_transaction() as sess:
+        sess["domain_id"] = populated_db.id
+        sess["question_count"] = 0
+        sess["pending_review_fact_id"] = fact0_id
+        sess["just_completed_fact_id"] = fact1_id
+
+    # Get review question for fact 0
+    response = client.get("/quiz")
+    assert response.status_code == 200
+
+    # Answer wrong - this will be the 2nd consecutive wrong, causing demotion
+    with client.session_transaction() as sess:
+        correct_answer = sess["correct_answer"]
+        options = sess["options"]
+        # Find a wrong answer
+        wrong_index = None
+        for i, option in enumerate(options):
+            if option != correct_answer:
+                wrong_index = i
+                break
+
+    client.post("/answer", data={"answer": wrong_index}, follow_redirects=False)
+
+    # Flags should be cleared despite demotion
+    with client.session_transaction() as sess:
+        assert "pending_review_fact_id" not in sess
+        assert "just_completed_fact_id" not in sess
+
+
+def test_duplicate_field_values_both_accepted(client, app, populated_db):
+    """Test that duplicate field values are both accepted as correct."""
+    from models import db, Domain
+
+    with app.app_context():
+        # Get the domain's field names to create compatible facts
+        domain = Domain.query.get(populated_db.id)
+        field_names = domain.get_field_names()
+
+        # Create two facts with the same value for a field
+        # Use the domain's actual fields
+        if len(field_names) >= 2:
+            field1, field2 = field_names[0], field_names[1]
+            fact1 = Fact(
+                domain_id=populated_db.id,
+                fact_data=f'{{"{field1}":"DuplicateA","{field2}":"SharedValue"}}',
+            )
+            fact2 = Fact(
+                domain_id=populated_db.id,
+                fact_data=f'{{"{field1}":"DuplicateB","{field2}":"SharedValue"}}',
+            )
+            db.session.add(fact1)
+            db.session.add(fact2)
+            db.session.commit()
+
+            mark_fact_learned(fact1.id)
+            mark_fact_learned(fact2.id)
+
+            fact1_id = fact1.id
+
+        with client.session_transaction() as sess:
+            sess["domain_id"] = populated_db.id
+            sess["question_count"] = 0
+            sess["pending_quiz_fact_id"] = fact1_id
+
+        # Get question - should be about fact1
+        response = client.get("/quiz")
+        assert response.status_code == 200
+
+        with client.session_transaction() as sess:
+            options = sess["options"]
+            correct_answer = sess["correct_answer"]
+
+            # Find the correct answer in options
+            correct_index = options.index(correct_answer)
+
+        # Answer with the correct answer
+        response = client.post(
+            "/answer", data={"answer": correct_index}, follow_redirects=False
+        )
+
+        # Should be marked as correct
+        attempt = (
+            Attempt.query.filter_by(fact_id=fact1_id)
+            .order_by(Attempt.id.desc())
+            .first()
+        )
+        assert attempt.correct is True
+
+
+def test_answer_checking_uses_values_not_indices(client, app, populated_db):
+    """Test that answer checking compares values, not indices."""
+    with app.app_context():
+        facts = Fact.query.filter_by(domain_id=populated_db.id).all()
+        mark_fact_learned(facts[0].id)
+        fact0_id = facts[0].id
+
+    with client.session_transaction() as sess:
+        sess["domain_id"] = populated_db.id
+        sess["question_count"] = 0
+        sess["pending_quiz_fact_id"] = fact0_id
+
+    # Get question
+    response = client.get("/quiz")
+    assert response.status_code == 200
+
+    with client.session_transaction() as sess:
+        options = sess["options"]
+        correct_answer = sess["correct_answer"]
+
+        # Find the index of the correct answer in the shuffled options
+        correct_index_in_options = options.index(correct_answer)
+
+    # Select the correct answer by its actual position
+    response = client.post(
+        "/answer", data={"answer": correct_index_in_options}, follow_redirects=False
+    )
+
+    # Should be marked as correct regardless of shuffling
+    with app.app_context():
+        attempt = (
+            Attempt.query.filter_by(fact_id=fact0_id)
+            .order_by(Attempt.id.desc())
+            .first()
+        )
+        assert attempt.correct is True

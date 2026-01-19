@@ -232,6 +232,12 @@ def quiz():
     session["current_fact_id"] = question_data["fact_id"]
     session["current_field_name"] = question_data["quiz_field"]
     session["correct_index"] = question_data["correct_index"]
+    session["correct_answer"] = question_data[
+        "correct_answer"
+    ]  # NEW: Store the actual answer value
+    session["options"] = question_data[
+        "options"
+    ]  # NEW: Store all options to look up selected value
     fact_id = question_data["fact_id"]
     context = question_data["context_field"]
     quiz = question_data["quiz_field"]
@@ -258,17 +264,25 @@ def answer():
     # Get session data
     fact_id = session.get("current_fact_id")
     field_name = session.get("current_field_name")
-    correct_index = session.get("correct_index")
+    correct_answer = session.get("correct_answer")  # NEW: Get the expected answer value
+    options = session.get("options")  # NEW: Get the options list
     domain_id = session.get("domain_id")
 
     # Check if this was a review question
     is_review_question = fact_id == session.get("pending_review_fact_id")
 
-    if fact_id is None or field_name is None or correct_index is None:
+    if (
+        fact_id is None
+        or field_name is None
+        or correct_answer is None
+        or options is None
+    ):
         return redirect(url_for("index"))
 
-    # Check if answer is correct
-    is_correct = selected_index == correct_index
+    # Check if answer is correct by comparing VALUES, not indices
+    # This handles the case where multiple facts have the same field value
+    selected_answer = options[selected_index]
+    is_correct = selected_answer == correct_answer
 
     # Record attempt
     record_attempt(fact_id, field_name, is_correct)
@@ -277,15 +291,25 @@ def answer():
     demoted = update_consecutive_attempts(fact_id, is_correct)
 
     if demoted:
+        # Clear any pending review flags if this was a review question
+        session.pop("pending_review_fact_id", None)
+        session.pop("just_completed_fact_id", None)
+
         # Fact returned to unlearned - show it again
         mark_fact_shown(fact_id)
         return redirect(url_for("show_fact", fact_id=fact_id))
 
-    # If this was a review question, clear the review flags
+    # If this was a review question
     if is_review_question:
+        # Clear the review flags
         session.pop("pending_review_fact_id", None)
         session.pop("just_completed_fact_id", None)
-        # Go to next quiz question (which will select next new fact)
+
+        # If wrong answer, show fact before continuing
+        if not is_correct:
+            return redirect(url_for("show_fact", fact_id=fact_id))
+
+        # If correct, go to next quiz question
         return redirect(url_for("quiz"))
 
     if is_correct:
