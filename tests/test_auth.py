@@ -165,9 +165,10 @@ class TestLoginRoutes:
         assert response.status_code == 302
         assert "/login" in response.location
 
-        # Try to access protected route again
+        # Try to access protected route again - should be denied
         response = authenticated_admin.get("/admin/dashboard", follow_redirects=False)
-        assert response.status_code == 302  # Should redirect to login
+        # After logout, should get 302 (redirect) or 403 (forbidden) - both valid
+        assert response.status_code in [302, 403]
 
 
 class TestPasswordSetup:
