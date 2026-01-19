@@ -68,7 +68,7 @@ class TestDoomLoopDetection:
 class TestRecoveryFactSelection:
     """Tests for recovery fact selection logic."""
 
-    def test_select_recovery_fact_basic(self, app):
+    def test_select_recovery_fact_basic(self, app, student_user):
         """Should select a learned but not mastered fact."""
         with app.app_context():
             # Create domain
@@ -86,19 +86,19 @@ class TestRecoveryFactSelection:
             db.session.flush()
 
             # Mark fact1 as learned
-            mark_fact_learned(fact1.id)
+            mark_fact_learned(fact1.id, student_user.id)
 
             # Record some successful attempts (but not mastered)
             for _ in range(3):
-                record_attempt(fact1.id, "field1", True)
+                record_attempt(fact1.id, "field1", True, student_user.id)
 
             # Select recovery fact
-            recovery = select_recovery_fact(domain.id, [])
+            recovery = select_recovery_fact(domain.id, [], student_user.id)
 
             assert recovery is not None
             assert recovery.id == fact1.id
 
-    def test_select_recovery_fact_excludes_specified_facts(self, app):
+    def test_select_recovery_fact_excludes_specified_facts(self, app, student_user):
         """Should exclude facts in the excluded list."""
         with app.app_context():
             # Create domain
@@ -116,16 +116,16 @@ class TestRecoveryFactSelection:
             db.session.flush()
 
             # Mark both as learned
-            mark_fact_learned(fact1.id)
-            mark_fact_learned(fact2.id)
+            mark_fact_learned(fact1.id, student_user.id)
+            mark_fact_learned(fact2.id, student_user.id)
 
             # Exclude fact1
-            recovery = select_recovery_fact(domain.id, [fact1.id])
+            recovery = select_recovery_fact(domain.id, [fact1.id], student_user.id)
 
             assert recovery is not None
             assert recovery.id == fact2.id
 
-    def test_select_recovery_fact_no_learned_facts(self, app):
+    def test_select_recovery_fact_no_learned_facts(self, app, student_user):
         """Should return None when no learned facts exist."""
         with app.app_context():
             # Create domain
@@ -141,11 +141,11 @@ class TestRecoveryFactSelection:
             db.session.flush()
 
             # Select recovery fact
-            recovery = select_recovery_fact(domain.id, [])
+            recovery = select_recovery_fact(domain.id, [], student_user.id)
 
             assert recovery is None
 
-    def test_select_recovery_fact_prefers_higher_success_rate(self, app):
+    def test_select_recovery_fact_prefers_higher_success_rate(self, app, student_user):
         """Should prefer facts with higher success rates."""
         with app.app_context():
             # Create domain
@@ -163,23 +163,23 @@ class TestRecoveryFactSelection:
             db.session.flush()
 
             # Mark both as learned
-            mark_fact_learned(fact1.id)
-            mark_fact_learned(fact2.id)
+            mark_fact_learned(fact1.id, student_user.id)
+            mark_fact_learned(fact2.id, student_user.id)
 
             # fact1: 50% success rate (2/4)
-            record_attempt(fact1.id, "field1", True)
-            record_attempt(fact1.id, "field1", True)
-            record_attempt(fact1.id, "field1", False)
-            record_attempt(fact1.id, "field1", False)
+            record_attempt(fact1.id, "field1", True, student_user.id)
+            record_attempt(fact1.id, "field1", True, student_user.id)
+            record_attempt(fact1.id, "field1", False, student_user.id)
+            record_attempt(fact1.id, "field1", False, student_user.id)
 
             # fact2: 75% success rate (3/4)
-            record_attempt(fact2.id, "field1", True)
-            record_attempt(fact2.id, "field1", True)
-            record_attempt(fact2.id, "field1", True)
-            record_attempt(fact2.id, "field1", False)
+            record_attempt(fact2.id, "field1", True, student_user.id)
+            record_attempt(fact2.id, "field1", True, student_user.id)
+            record_attempt(fact2.id, "field1", True, student_user.id)
+            record_attempt(fact2.id, "field1", False, student_user.id)
 
             # Select recovery fact
-            recovery = select_recovery_fact(domain.id, [])
+            recovery = select_recovery_fact(domain.id, [], student_user.id)
 
             # Should prefer fact2 with higher success rate
             assert recovery is not None

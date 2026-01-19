@@ -24,7 +24,7 @@ def check_doom_loop_trigger(recent_attempts):
     return wrong_count >= 3
 
 
-def select_recovery_fact(domain_id, excluded_fact_ids):
+def select_recovery_fact(domain_id, excluded_fact_ids, user_id):
     """
     Select an appropriate fact for doom loop recovery.
 
@@ -37,12 +37,13 @@ def select_recovery_fact(domain_id, excluded_fact_ids):
     Args:
         domain_id: The current domain ID
         excluded_fact_ids: List of fact IDs to exclude (recent failures)
+        user_id: ID of the user
 
     Returns:
         Fact: Selected fact for recovery, or None if no suitable facts
     """
-    # Get all learned facts in domain
-    learned_facts = get_learned_facts(domain_id)
+    # Get all learned facts in domain for this user
+    learned_facts = get_learned_facts(domain_id, user_id)
 
     if not learned_facts:
         # No learned facts available for recovery
@@ -53,7 +54,7 @@ def select_recovery_fact(domain_id, excluded_fact_ids):
     for fact in learned_facts:
         if fact.id in excluded_fact_ids:
             continue
-        if get_mastery_status(fact.id):
+        if get_mastery_status(fact.id, user_id):
             continue
         candidates.append(fact)
 
@@ -61,7 +62,7 @@ def select_recovery_fact(domain_id, excluded_fact_ids):
         # Fallback: just use any learned fact (even if it was excluded)
         # This handles edge case where all learned facts were part of the doom loop
         for fact in learned_facts:
-            if not get_mastery_status(fact.id):
+            if not get_mastery_status(fact.id, user_id):
                 return fact
         # If all learned facts are mastered, just pick the first one
         return learned_facts[0] if learned_facts else None
@@ -69,7 +70,7 @@ def select_recovery_fact(domain_id, excluded_fact_ids):
     # Calculate success rates and prefer higher success
     fact_scores = []
     for fact in candidates:
-        attempts = Attempt.query.filter_by(fact_id=fact.id).all()
+        attempts = Attempt.query.filter_by(fact_id=fact.id, user_id=user_id).all()
         if not attempts:
             fact_scores.append((fact, 0.5))  # Neutral score
             continue

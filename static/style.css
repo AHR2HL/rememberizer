@@ -319,3 +319,341 @@ h2 {
         padding: 12px 15px;
     }
 }
+
+/* ===========================================
+   AUTH SYSTEM STYLES
+   =========================================== */
+
+/* User Info (displayed when logged in) */
+.user-info {
+    text-align: center;
+    margin: 15px 0;
+    padding: 10px;
+    border-bottom: 1px solid #00FF00;
+}
+
+.user-info p {
+    color: #00AA00;
+    font-size: 14px;
+}
+
+.logout-link {
+    color: #FF0000;
+    text-decoration: none;
+    margin-left: 20px;
+    border: 1px solid #FF0000;
+    padding: 2px 8px;
+    font-weight: bold;
+}
+
+.logout-link:hover {
+    background-color: #FF0000;
+    color: #000000;
+}
+
+/* Flash Messages */
+.flash-messages {
+    margin: 20px 0;
+}
+
+.flash-error {
+    background-color: #330000;
+    border: 2px solid #FF0000;
+    color: #FF6666;
+    padding: 15px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.flash-success {
+    background-color: #003300;
+    border: 2px solid #00FF00;
+    color: #66FF66;
+    padding: 15px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.flash-info {
+    background-color: #003366;
+    border: 2px solid #0066FF;
+    color: #66CCFF;
+    padding: 15px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+/* Login Form */
+.login-form {
+    max-width: 400px;
+    margin: 30px auto;
+}
+
+.form-group {
+    margin: 20px 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #00FF00;
+    font-weight: bold;
+}
+
+.form-input {
+    width: 100%;
+    background-color: #001a00;
+    color: #00FF00;
+    border: 2px solid #00FF00;
+    padding: 12px 15px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: #00FF00;
+    box-shadow: 0 0 10px #00FF00;
+}
+
+.form-input::placeholder {
+    color: #006600;
+}
+
+.form-actions {
+    margin: 30px 0;
+    text-align: center;
+}
+
+.submit-button {
+    background-color: #000000;
+    color: #00FF00;
+    border: 2px solid #00FF00;
+    padding: 15px 40px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: bold;
+}
+
+.submit-button:hover {
+    background-color: #00FF00;
+    color: #000000;
+    transform: scale(1.05);
+}
+
+/* Dashboard Styles */
+.dashboard-section {
+    margin: 30px 0;
+    padding: 20px;
+    border: 2px solid #00FF00;
+}
+
+.dashboard-section h3 {
+    color: #00FF00;
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+.stats {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #00FF00;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #00AA00;
+}
+
+/* Student List */
+.student-list {
+    margin: 20px 0;
+}
+
+.student-item {
+    border: 2px solid #00FF00;
+    padding: 15px;
+    margin: 10px 0;
+    background-color: #001a00;
+}
+
+.student-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.student-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #00FF00;
+}
+
+.student-info {
+    color: #00AA00;
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+.student-progress {
+    margin: 10px 0;
+    font-family: monospace;
+    letter-spacing: 2px;
+}
+
+.student-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-view {
+    background-color: #000000;
+    color: #00FF00;
+    border: 2px solid #00FF00;
+    padding: 8px 15px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-view:hover {
+    background-color: #00FF00;
+    color: #000000;
+}
+
+.btn-manage {
+    background-color: #000000;
+    color: #0066FF;
+    border: 2px solid #0066FF;
+    padding: 8px 15px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-manage:hover {
+    background-color: #0066FF;
+    color: #000000;
+}
+
+.btn-danger {
+    background-color: #000000;
+    color: #FF0000;
+    border: 2px solid #FF0000;
+    padding: 8px 15px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-danger:hover {
+    background-color: #FF0000;
+    color: #000000;
+}
+
+/* Form Styles */
+.create-form {
+    max-width: 500px;
+    margin: 30px auto;
+}
+
+.create-form .form-group {
+    margin: 20px 0;
+}
+
+.create-form select {
+    width: 100%;
+    background-color: #001a00;
+    color: #00FF00;
+    border: 2px solid #00FF00;
+    padding: 12px 15px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    outline: none;
+    cursor: pointer;
+}
+
+.create-form select:focus {
+    border-color: #00FF00;
+    box-shadow: 0 0 10px #00FF00;
+}
+
+/* Domain Assignment */
+.domain-assignment-list {
+    margin: 20px 0;
+}
+
+.domain-assignment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #00FF00;
+    margin: 5px 0;
+    background-color: #001a00;
+}
+
+.domain-unassigned {
+    opacity: 0.5;
+}
+
+/* Info and Welcome Boxes */
+.info-box {
+    background-color: #003366;
+    border: 2px solid #0066FF;
+    color: #66CCFF;
+    padding: 15px;
+    margin: 20px 0;
+}
+
+.info-box p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.info-box ul {
+    margin: 10px 0 10px 20px;
+}
+
+.info-box li {
+    margin: 5px 0;
+}
+
+.welcome-box {
+    background-color: #003300;
+    border: 2px solid #00FF00;
+    color: #66FF66;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.welcome-box p {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+.welcome-box strong {
+    color: #00FF00;
+}

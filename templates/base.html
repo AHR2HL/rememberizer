@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Rememberizer v2.0{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <div class="terminal-header">
+            <h1>╔═══════════════════════════════════╗</h1>
+            <h1>║{% block header_title %}REMEMBERIZER V2.0{% endblock %}║</h1>
+            <h1>╚═══════════════════════════════════╝</h1>
+        </div>
+
+        {% if current_user.is_authenticated %}
+        <div class="user-info">
+            <p>Logged in as: {{ current_user.get_full_name() }} ({{ current_user.role }})
+               <a href="{{ url_for('logout') }}" class="logout-link">[LOGOUT]</a>
+            </p>
+        </div>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+
+        <div class="footer">
+            <p>────────────────────────────────────</p>
+            <p>{% block footer_text %}Rememberizer Multi-User System{% endblock %}</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

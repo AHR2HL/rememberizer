@@ -64,13 +64,13 @@ def test_show_fact_route_invalid_id(client):
     assert response.status_code == 404
 
 
-def test_quiz_route(client, app, populated_db):
+def test_quiz_route(client, app, populated_db, student_user):
     """Test displaying a quiz question."""
     with app.app_context():
         # Mark all facts as learned so quiz can proceed
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
         for fact in facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
     # Initialize session
     with client.session_transaction() as sess:
@@ -95,13 +95,13 @@ def test_quiz_route_no_session(client):
     assert response.location.endswith("/")
 
 
-def test_answer_route_correct(client, app, populated_db):
+def test_answer_route_correct(client, app, populated_db, student_user):
     """Test submitting a correct answer."""
     with app.app_context():
         fact = Fact.query.first()
 
         # Mark fact as learned
-        mark_fact_learned(fact.id)
+        mark_fact_learned(fact.id, student_user.id)
 
         # Initialize session
         with client.session_transaction() as sess:
@@ -123,18 +123,20 @@ def test_answer_route_correct(client, app, populated_db):
             assert sess["question_count"] == 5
 
         # Check attempt was recorded
-        attempt = Attempt.query.filter_by(fact_id=fact.id).first()
+        attempt = Attempt.query.filter_by(
+            fact_id=fact.id, user_id=student_user.id
+        ).first()
         assert attempt is not None
         assert attempt.correct is True
 
 
-def test_answer_route_incorrect(client, app, populated_db):
+def test_answer_route_incorrect(client, app, populated_db, student_user):
     """Test submitting an incorrect answer."""
     with app.app_context():
         fact = Fact.query.first()
 
         # Mark fact as learned
-        mark_fact_learned(fact.id)
+        mark_fact_learned(fact.id, student_user.id)
 
         # Initialize session
         with client.session_transaction() as sess:
@@ -156,7 +158,9 @@ def test_answer_route_incorrect(client, app, populated_db):
             assert sess["question_count"] == 0
 
         # Check attempt was recorded
-        attempt = Attempt.query.filter_by(fact_id=fact.id).first()
+        attempt = Attempt.query.filter_by(
+            fact_id=fact.id, user_id=student_user.id
+        ).first()
         assert attempt is not None
         assert attempt.correct is False
 
@@ -229,15 +233,16 @@ def test_full_quiz_flow(client, app, populated_db):
             assert sess["question_count"] == 1
 
 
-def test_mark_learned_route(client, app, populated_db):
+def test_mark_learned_route(client, app, populated_db, student_user):
     """Test marking a fact as learned."""
     with app.app_context():
         fact = Fact.query.first()
 
-        # Initialize session
+        # Initialize session with user_id
         with client.session_transaction() as sess:
             sess["domain_id"] = populated_db.id
             sess["question_count"] = 0
+            sess["user_id"] = student_user.id
 
         # Mark fact as learned
         response = client.post(f"/mark_learned/{fact.id}", follow_redirects=False)
@@ -245,28 +250,29 @@ def test_mark_learned_route(client, app, populated_db):
         assert response.location.endswith("/quiz")
 
         # Verify fact is marked as learned
-        assert is_fact_learned(fact.id) is True
+        assert is_fact_learned(fact.id, student_user.id) is True
 
         # Verify pending quiz fact is set
         with client.session_transaction() as sess:
             assert sess.get("pending_quiz_fact_id") == fact.id
 
 
-def test_reset_domain_route(client, app, populated_db):
+def test_reset_domain_route(client, app, populated_db, student_user):
     """Test resetting domain progress."""
     with app.app_context():
         fact = Fact.query.first()
 
         # Add some progress
-        mark_fact_learned(fact.id)
+        mark_fact_learned(fact.id, student_user.id)
         from models import record_attempt
 
-        record_attempt(fact.id, "name", True)
+        record_attempt(fact.id, "name", True, student_user.id)
 
         # Initialize session
         with client.session_transaction() as sess:
             sess["domain_id"] = populated_db.id
             sess["question_count"] = 5
+            sess["user_id"] = student_user.id
 
         # Reset domain
         response = client.post("/reset_domain", follow_redirects=False)
@@ -279,20 +285,30 @@ def test_reset_domain_route(client, app, populated_db):
             assert "question_count" not in sess
 
         # Check progress was cleared
-        assert Attempt.query.filter_by(fact_id=fact.id).count() == 0
-        assert FactState.query.filter_by(fact_id=fact.id).count() == 0
+        assert (
+            Attempt.query.filter_by(fact_id=fact.id, user_id=student_user.id).count()
+            == 0
+        )
+        assert (
+            FactState.query.filter_by(fact_id=fact.id, user_id=student_user.id).count()
+            == 0
+        )
 
 
-def test_reset_domain_from_menu_route(client, app, populated_db):
+def test_reset_domain_from_menu_route(client, app, populated_db, student_user):
     """Test resetting domain from menu."""
     with app.app_context():
         fact = Fact.query.first()
 
         # Add some progress
-        mark_fact_learned(fact.id)
+        mark_fact_learned(fact.id, student_user.id)
         from models import record_attempt
 
-        record_attempt(fact.id, "name", True)
+        record_attempt(fact.id, "name", True, student_user.id)
+
+        # Initialize session with user_id
+        with client.session_transaction() as sess:
+            sess["user_id"] = student_user.id
 
         # Reset domain from menu
         response = client.post(
@@ -302,18 +318,24 @@ def test_reset_domain_from_menu_route(client, app, populated_db):
         assert response.location.endswith("/")
 
         # Check progress was cleared
-        assert Attempt.query.filter_by(fact_id=fact.id).count() == 0
-        assert FactState.query.filter_by(fact_id=fact.id).count() == 0
+        assert (
+            Attempt.query.filter_by(fact_id=fact.id, user_id=student_user.id).count()
+            == 0
+        )
+        assert (
+            FactState.query.filter_by(fact_id=fact.id, user_id=student_user.id).count()
+            == 0
+        )
 
 
-def test_demotion_flow(client, app, populated_db):
+def test_demotion_flow(client, app, populated_db, student_user):
     """Test demotion to unlearned after 2 consecutive wrong answers."""
     with app.app_context():
         fact = Fact.query.first()
 
         # Mark fact as learned
-        mark_fact_learned(fact.id)
-        assert is_fact_learned(fact.id) is True
+        mark_fact_learned(fact.id, student_user.id)
+        assert is_fact_learned(fact.id, student_user.id) is True
 
         # Initialize session
         with client.session_transaction() as sess:
@@ -324,12 +346,13 @@ def test_demotion_flow(client, app, populated_db):
             sess["correct_index"] = 2
             sess["correct_answer"] = "TestAnswer"
             sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
+            sess["user_id"] = student_user.id
 
         # First wrong answer
         response = client.post("/answer", data={"answer": 1}, follow_redirects=False)
         assert response.status_code == 200  # Now renders result page
         assert b"INCORRECT" in response.data
-        assert is_fact_learned(fact.id) is True  # Still learned
+        assert is_fact_learned(fact.id, student_user.id) is True  # Still learned
 
         # Second wrong answer - should demote
         with client.session_transaction() as sess:
@@ -342,16 +365,18 @@ def test_demotion_flow(client, app, populated_db):
         response = client.post("/answer", data={"answer": 1}, follow_redirects=False)
         assert response.status_code == 200  # Now renders result page
         assert b"INCORRECT" in response.data
-        assert is_fact_learned(fact.id) is False  # Demoted to unlearned
+        assert (
+            is_fact_learned(fact.id, student_user.id) is False
+        )  # Demoted to unlearned
 
 
-def test_two_consecutive_correct_flow(client, app, populated_db):
+def test_two_consecutive_correct_flow(client, app, populated_db, student_user):
     """Test that 2 consecutive correct answers clears pending quiz fact."""
     with app.app_context():
         fact = Fact.query.first()
 
         # Mark fact as learned
-        mark_fact_learned(fact.id)
+        mark_fact_learned(fact.id, student_user.id)
 
         # Initialize session with pending quiz fact
         with client.session_transaction() as sess:
@@ -363,6 +388,7 @@ def test_two_consecutive_correct_flow(client, app, populated_db):
             sess["correct_index"] = 2
             sess["correct_answer"] = "TestAnswer"
             sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
+            sess["user_id"] = student_user.id
 
         # First correct answer
         response = client.post("/answer", data={"answer": 2}, follow_redirects=False)
@@ -386,13 +412,15 @@ def test_two_consecutive_correct_flow(client, app, populated_db):
             assert "pending_quiz_fact_id" not in sess  # Cleared
 
 
-def test_quiz_route_no_duplicate_consecutive_questions(client, app, populated_db):
+def test_quiz_route_no_duplicate_consecutive_questions(
+    client, app, populated_db, student_user
+):
     """Test that consecutive questions don't duplicate same field pair."""
     with app.app_context():
         # Mark all facts as learned
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
         for fact in facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
     # Initialize session
     with client.session_transaction() as sess:
@@ -423,13 +451,15 @@ def test_quiz_route_no_duplicate_consecutive_questions(client, app, populated_db
         assert len(parts) == 3
 
 
-def test_quiz_route_supports_bidirectional_questions(client, app, populated_db):
+def test_quiz_route_supports_bidirectional_questions(
+    client, app, populated_db, student_user
+):
     """Test that questions are generated in both directions."""
     with app.app_context():
         # Mark all facts as learned
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
         for fact in facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
     # Initialize session
     with client.session_transaction() as sess:
@@ -471,13 +501,13 @@ def test_quiz_route_supports_bidirectional_questions(client, app, populated_db):
     assert name_as_context_count > 0 or name_as_quiz_count > 0
 
 
-def test_quiz_route_never_asks_field_to_itself(client, app, populated_db):
+def test_quiz_route_never_asks_field_to_itself(client, app, populated_db, student_user):
     """Test that questions never ask field→itself."""
     with app.app_context():
         # Mark all facts as learned
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
         for fact in facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
     # Initialize session
     with client.session_transaction() as sess:
@@ -508,13 +538,15 @@ def test_quiz_route_never_asks_field_to_itself(client, app, populated_db):
         client.post("/answer", data={"answer": correct_index}, follow_redirects=False)
 
 
-def test_question_count_increments_on_every_quiz(client, app, populated_db):
+def test_question_count_increments_on_every_quiz(
+    client, app, populated_db, student_user
+):
     """Test that question_count increments on every /quiz call."""
     with app.app_context():
         # Mark all facts as learned
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
         for fact in facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
     # Initialize session
     with client.session_transaction() as sess:
@@ -535,14 +567,16 @@ def test_question_count_increments_on_every_quiz(client, app, populated_db):
         client.post("/answer", data={"answer": correct_index})
 
 
-def test_review_question_after_two_consecutive_correct(client, app, populated_db):
+def test_review_question_after_two_consecutive_correct(
+    client, app, populated_db, student_user
+):
     """Test that a review question is asked after 2 consecutive correct answers."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
 
         # Mark first two facts as learned
-        mark_fact_learned(facts[0].id)
-        mark_fact_learned(facts[1].id)
+        mark_fact_learned(facts[0].id, student_user.id)
+        mark_fact_learned(facts[1].id, student_user.id)
 
         # Get fact IDs before leaving context
         fact0_id = facts[0].id
@@ -574,12 +608,12 @@ def test_review_question_after_two_consecutive_correct(client, app, populated_db
         assert sess.get("current_fact_id") == fact0_id
 
 
-def test_review_flags_cleared_after_answer(client, app, populated_db):
+def test_review_flags_cleared_after_answer(client, app, populated_db, student_user):
     """Test that review flags are cleared after answering review question."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
-        mark_fact_learned(facts[0].id)
-        mark_fact_learned(facts[1].id)
+        mark_fact_learned(facts[0].id, student_user.id)
+        mark_fact_learned(facts[1].id, student_user.id)
 
         # Get fact IDs before leaving context
         fact0_id = facts[0].id
@@ -607,14 +641,14 @@ def test_review_flags_cleared_after_answer(client, app, populated_db):
         assert "just_completed_fact_id" not in sess
 
 
-def test_review_pattern_multiple_facts(client, app, populated_db):
+def test_review_pattern_multiple_facts(client, app, populated_db, student_user):
     """Test review pattern: 2 questions on new fact + 1 review."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()[:3]
 
         # Mark all as learned
         for fact in facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
         # Get fact IDs before leaving context
         fact0_id = facts[0].id
@@ -669,19 +703,19 @@ def test_review_pattern_multiple_facts(client, app, populated_db):
     assert question_log[4][2] != fact1_id  # Should not be the just-completed fact
 
 
-def test_reinforcement_every_tenth_question(client, app, populated_db):
+def test_reinforcement_every_tenth_question(client, app, populated_db, student_user):
     """Test that Q10, Q20, Q30 are reinforcement questions for mastered facts."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
 
         # Mark all facts as learned
         for fact in facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
         # Master first fact (7 correct attempts)
         # Record all at once so has_two_consecutive_correct is satisfied
         for i in range(7):
-            record_attempt(facts[0].id, "name", True)
+            record_attempt(facts[0].id, "name", True, student_user.id)
 
         # Get the mastered fact ID before exiting context
         mastered_fact_id = facts[0].id
@@ -703,7 +737,7 @@ def test_reinforcement_every_tenth_question(client, app, populated_db):
         ), "Q10 should be reinforcement of mastered fact"
 
 
-def test_quiz_page_box_rendering(client, app, populated_db):
+def test_quiz_page_box_rendering(client, app, populated_db, student_user):
     """Test that quiz page renders box correctly."""
     with app.app_context():
         with client.session_transaction() as sess:
@@ -711,7 +745,7 @@ def test_quiz_page_box_rendering(client, app, populated_db):
             sess["question_count"] = 0
 
         fact = Fact.query.first()
-        mark_fact_learned(fact.id)
+        mark_fact_learned(fact.id, student_user.id)
 
         response = client.get("/quiz", follow_redirects=True)
         assert response.status_code == 200
@@ -727,17 +761,17 @@ def test_select_domain_box_rendering(client, populated_db):
     assert b"\xe2\x95\x94" in response.data  # ╔
 
 
-def test_progress_indicator_in_quiz_page(client, app, populated_db):
+def test_progress_indicator_in_quiz_page(client, app, populated_db, student_user):
     """Test that progress indicator appears in quiz page."""
     with app.app_context():
         # Mark all facts as learned so quiz page displays
         facts = Fact.query.filter_by(domain_id=populated_db.id).order_by(Fact.id).all()
         for fact in facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
         # Master first fact
         for i in range(7):
-            record_attempt(facts[0].id, "name", True)
+            record_attempt(facts[0].id, "name", True, student_user.id)
 
         with client.session_transaction() as sess:
             sess["domain_id"] = populated_db.id
@@ -762,19 +796,19 @@ def test_progress_indicator_in_show_fact_page(client, app, populated_db):
         assert b"\xc2\xb7" in response.data  # Contains · character
 
 
-def test_progress_updates_after_answer(client, app, populated_db):
+def test_progress_updates_after_answer(client, app, populated_db, student_user):
     """Test that progress indicator updates after answering questions."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).order_by(Fact.id).all()
 
         # Mark first fact as learned and master it
-        mark_fact_learned(facts[0].id)
+        mark_fact_learned(facts[0].id, student_user.id)
         for i in range(7):
-            record_attempt(facts[0].id, "name", True)
+            record_attempt(facts[0].id, "name", True, student_user.id)
 
         # Mark second fact as learned (but not mastered)
-        mark_fact_learned(facts[1].id)
-        record_attempt(facts[1].id, "name", True)
+        mark_fact_learned(facts[1].id, student_user.id)
+        record_attempt(facts[1].id, "name", True, student_user.id)
 
         with client.session_transaction() as sess:
             sess["domain_id"] = populated_db.id
@@ -788,12 +822,14 @@ def test_progress_updates_after_answer(client, app, populated_db):
         assert b"Facts:" in response.data
 
 
-def test_review_question_wrong_answer_shows_fact(client, app, populated_db):
+def test_review_question_wrong_answer_shows_fact(
+    client, app, populated_db, student_user
+):
     """Test that wrong answer on review question shows the fact."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
-        mark_fact_learned(facts[0].id)
-        mark_fact_learned(facts[1].id)
+        mark_fact_learned(facts[0].id, student_user.id)
+        mark_fact_learned(facts[1].id, student_user.id)
 
         fact0_id = facts[0].id
         fact1_id = facts[1].id
@@ -829,15 +865,15 @@ def test_review_question_wrong_answer_shows_fact(client, app, populated_db):
     assert b"INCORRECT" in response.data
 
 
-def test_demotion_during_review_clears_flags(client, app, populated_db):
+def test_demotion_during_review_clears_flags(client, app, populated_db, student_user):
     """Test that demotion during review clears review flags."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
-        mark_fact_learned(facts[0].id)
-        mark_fact_learned(facts[1].id)
+        mark_fact_learned(facts[0].id, student_user.id)
+        mark_fact_learned(facts[1].id, student_user.id)
 
         # Give fact 0 one wrong answer (need 2 for demotion)
-        record_attempt(facts[0].id, "name", False)
+        record_attempt(facts[0].id, "name", False, student_user.id)
 
         fact0_id = facts[0].id
         fact1_id = facts[1].id
@@ -872,7 +908,7 @@ def test_demotion_during_review_clears_flags(client, app, populated_db):
         assert "just_completed_fact_id" not in sess
 
 
-def test_duplicate_field_values_both_accepted(client, app, populated_db):
+def test_duplicate_field_values_both_accepted(client, app, populated_db, student_user):
     """Test that duplicate field values are both accepted as correct."""
     from models import db, Domain
 
@@ -897,8 +933,8 @@ def test_duplicate_field_values_both_accepted(client, app, populated_db):
             db.session.add(fact2)
             db.session.commit()
 
-            mark_fact_learned(fact1.id)
-            mark_fact_learned(fact2.id)
+            mark_fact_learned(fact1.id, student_user.id)
+            mark_fact_learned(fact2.id, student_user.id)
 
             fact1_id = fact1.id
 
@@ -925,18 +961,20 @@ def test_duplicate_field_values_both_accepted(client, app, populated_db):
 
         # Should be marked as correct
         attempt = (
-            Attempt.query.filter_by(fact_id=fact1_id)
+            Attempt.query.filter_by(fact_id=fact1_id, user_id=student_user.id)
             .order_by(Attempt.id.desc())
             .first()
         )
         assert attempt.correct is True
 
 
-def test_answer_checking_uses_values_not_indices(client, app, populated_db):
+def test_answer_checking_uses_values_not_indices(
+    client, app, populated_db, student_user
+):
     """Test that answer checking compares values, not indices."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
-        mark_fact_learned(facts[0].id)
+        mark_fact_learned(facts[0].id, student_user.id)
         fact0_id = facts[0].id
 
     with client.session_transaction() as sess:
@@ -963,7 +1001,7 @@ def test_answer_checking_uses_values_not_indices(client, app, populated_db):
     # Should be marked as correct regardless of shuffling
     with app.app_context():
         attempt = (
-            Attempt.query.filter_by(fact_id=fact0_id)
+            Attempt.query.filter_by(fact_id=fact0_id, user_id=student_user.id)
             .order_by(Attempt.id.desc())
             .first()
         )

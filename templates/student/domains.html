@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}My Domains{% endblock %}
+
+{% block header_title %}{{ "MY DOMAINS" | center_in_box }}{% endblock %}
+
+{% block content %}
+<div class="content">
+    <h2>&gt; YOUR ASSIGNED DOMAINS</h2>
+
+    {% if domain_data|length == 0 %}
+        <div class="info-box">
+            <p>You don't have any domains assigned yet.</p>
+            <p>Please contact your teacher to get started.</p>
+        </div>
+    {% else %}
+        <div class="domain-list">
+            {% for data in domain_data %}
+            <div class="domain-item">
+                <form method="POST" action="{{ url_for('start') }}" class="domain-form">
+                    <input type="hidden" name="domain_id" value="{{ data.domain.id }}">
+                    <button type="submit" class="domain-button">
+                        <strong>{{ data.domain.name }}</strong>
+                        <br>
+                        Progress: {{ data.progress.progress_string }}
+                        <br>
+                        Learned: {{ data.progress.learned_count }}/{{ data.progress.total_facts }} |
+                        Mastered: {{ data.progress.mastered_count }}/{{ data.progress.total_facts }}
+                        {% if data.progress.attempt_count > 0 %}
+                        <br>
+                        Questions Answered: {{ data.progress.attempt_count }}
+                        {% endif %}
+                    </button>
+                </form>
+                {% if data.progress.attempt_count > 0 %}
+                <form method="POST" action="{{ url_for('reset_domain_from_menu', domain_id=data.domain.id) }}"
+                      class="reset-form" onsubmit="return confirm('Reset all your progress for this domain?');">
+                    <button type="submit" class="reset-button">[RESET]</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if questions_today > 0 %}
+    <div class="info-box" style="text-align: center;">
+        <p><strong>Questions Today:</strong> {{ questions_today }}</p>
+    </div>
+    {% endif %}
+
+    <div class="button-container">
+        <a href="{{ url_for('student_progress') }}" class="action-button">[VIEW DETAILED PROGRESS]</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer_text %}Select a domain to start practicing{% endblock %}

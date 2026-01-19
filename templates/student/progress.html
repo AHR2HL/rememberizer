@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}My Progress{% endblock %}
+
+{% block header_title %}{{ "MY PROGRESS" | center_in_box }}{% endblock %}
+
+{% block content %}
+<div class="content">
+    <h2>&gt; OVERALL STATS</h2>
+
+    <div class="info-box">
+        <p><strong>Total Domains:</strong> {{ domain_data|length }}</p>
+        <p><strong>Total Questions Answered:</strong> {{ total_attempts }}</p>
+        <p><strong>Questions Today:</strong> {{ questions_today }}</p>
+        {% if formatted_time != "0m" %}
+        <p><strong>Total Time Spent:</strong> {{ formatted_time }}</p>
+        {% endif %}
+        {% if session_count > 0 %}
+        <p><strong>Practice Sessions:</strong> {{ session_count }}</p>
+        {% endif %}
+    </div>
+
+    {% if domain_data|length > 0 %}
+        <h2>&gt; DOMAIN BREAKDOWN</h2>
+
+        <div class="domain-assignment-list">
+            {% for data in domain_data %}
+            <div class="domain-assignment-item">
+                <div>
+                    <strong>{{ data.domain.name }}</strong>
+                    <br>
+                    Progress: {{ data.progress.progress_string }}
+                    <br>
+                    Learned: {{ data.progress.learned_count }}/{{ data.progress.total_facts }}
+                    <br>
+                    Mastered: {{ data.progress.mastered_count }}/{{ data.progress.total_facts }}
+                    {% if data.progress.attempt_count > 0 %}
+                    <br>
+                    Questions Answered: {{ data.progress.attempt_count }}
+                    {% else %}
+                    <br>
+                    <span style="color: #FFFF00;">Not started yet</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <form method="POST" action="{{ url_for('start') }}" style="display: inline;">
+                        <input type="hidden" name="domain_id" value="{{ data.domain.id }}">
+                        <button type="submit" class="btn-view">[PRACTICE]</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="info-box">
+            <p>You don't have any domains assigned yet.</p>
+            <p>Please contact your teacher to get started.</p>
+        </div>
+    {% endif %}
+
+    <div class="button-container">
+        <a href="{{ url_for('student_domains') }}" class="action-button">[BACK TO DOMAINS]</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer_text %}Your personal progress overview{% endblock %}
