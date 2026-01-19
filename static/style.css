@@ -139,6 +139,28 @@ h2 {
     background-color: #001a00;
 }
 
+/* Highlighted Row (when user gets question wrong) */
+.fact-table tr.highlight-row {
+    background-color: #2a3300;
+    position: relative;
+    animation: pulseBorder 2s ease-in-out infinite;
+}
+
+.fact-table tr.highlight-row td {
+    color: #CCFF00;
+    font-weight: bold;
+    border-color: #CCFF00;
+}
+
+@keyframes pulseBorder {
+    0%, 100% {
+        box-shadow: 0 0 5px #CCFF00, inset 0 0 5px #CCFF00;
+    }
+    50% {
+        box-shadow: 0 0 15px #CCFF00, inset 0 0 10px #CCFF00;
+    }
+}
+
 /* Quiz */
 .quiz-controls {
     margin: 20px 0;

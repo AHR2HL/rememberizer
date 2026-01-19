@@ -64,6 +64,20 @@ def progress_string_filter(domain_id):
     return get_progress_string(domain_id)
 
 
+@app.template_filter("format_field_name")
+def format_field_name_filter(field_name):
+    """Format field name for display by replacing underscores with spaces."""
+    return field_name.replace("_", " ")
+
+
+@app.template_filter("singularize")
+def singularize_filter(domain_name):
+    """Singularize domain name for display."""
+    from quiz_logic import singularize_domain_name
+
+    return singularize_domain_name(domain_name)
+
+
 def init_database():
     """Initialize database and load fact domains."""
     global _db_initialized
@@ -128,6 +142,9 @@ def show_fact(fact_id):
     fact_data = fact.get_fact_data()
     field_names = domain.get_field_names()
 
+    # Get highlight_field from query params (if user got question wrong)
+    highlight_field = request.args.get("highlight_field", None)
+
     # Mark as shown (but not learned yet - that happens on continue)
     mark_fact_shown(fact_id)
 
@@ -137,6 +154,7 @@ def show_fact(fact_id):
         fact_data=fact_data,
         field_names=field_names,
         domain=domain,
+        highlight_field=highlight_field,
     )
 
 
@@ -290,29 +308,33 @@ def answer():
     # Update consecutive counters and check for demotion
     demoted = update_consecutive_attempts(fact_id, is_correct)
 
+    # Get domain for the result page
+    domain = Domain.query.get(domain_id)
+
+    # Determine next URL based on the result
     if demoted:
         # Clear any pending review flags if this was a review question
         session.pop("pending_review_fact_id", None)
         session.pop("just_completed_fact_id", None)
 
-        # Fact returned to unlearned - show it again
+        # Fact returned to unlearned - show it again with highlighted field
         mark_fact_shown(fact_id)
-        return redirect(url_for("show_fact", fact_id=fact_id))
+        next_url = url_for("show_fact", fact_id=fact_id, highlight_field=field_name)
 
     # If this was a review question
-    if is_review_question:
+    elif is_review_question:
         # Clear the review flags
         session.pop("pending_review_fact_id", None)
         session.pop("just_completed_fact_id", None)
 
-        # If wrong answer, show fact before continuing
+        # If wrong answer, show fact before continuing with highlighted field
         if not is_correct:
-            return redirect(url_for("show_fact", fact_id=fact_id))
+            next_url = url_for("show_fact", fact_id=fact_id, highlight_field=field_name)
+        else:
+            # If correct, go to next quiz question
+            next_url = url_for("quiz")
 
-        # If correct, go to next quiz question
-        return redirect(url_for("quiz"))
-
-    if is_correct:
+    elif is_correct:
         # Check if achieved 2 consecutive correct
         if has_two_consecutive_correct(fact_id):
             # Clear pending quiz fact
@@ -335,10 +357,18 @@ def answer():
         # This ensures count increments on every question, not just correct answers
 
         # Go to next quiz question
-        return redirect(url_for("quiz"))
+        next_url = url_for("quiz")
     else:
-        # Wrong answer - show fact again before re-quizzing
-        return redirect(url_for("show_fact", fact_id=fact_id))
+        # Wrong answer - show fact again before re-quizzing with highlighted field
+        next_url = url_for("show_fact", fact_id=fact_id, highlight_field=field_name)
+
+    # Render result page with animation
+    return render_template(
+        "answer_result.html",
+        is_correct=is_correct,
+        next_url=next_url,
+        domain=domain,
+    )
 
 
 @app.route("/reset_domain", methods=["POST"])

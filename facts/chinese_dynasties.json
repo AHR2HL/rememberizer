@@ -1,0 +1,125 @@
+{
+  "domain_name": "Chinese Dynasties",
+  "fields": ["name", "years", "predecessor", "successor", "western_event"],
+  "facts": [
+    {
+      "name": "Xia Dynasty",
+      "years": "2070 BCE to 1600 BCE",
+      "predecessor": "None",
+      "successor": "Shang Dynasty",
+      "western_event": "Bronze Age in Mesopotamia"
+    },
+    {
+      "name": "Shang Dynasty",
+      "years": "1600 BCE to 1046 BCE",
+      "predecessor": "Xia Dynasty",
+      "successor": "Zhou Dynasty",
+      "western_event": "Trojan War"
+    },
+    {
+      "name": "Zhou Dynasty",
+      "years": "1046 BCE to 256 BCE",
+      "predecessor": "Shang Dynasty",
+      "successor": "Spring and Autumn Period",
+      "western_event": "Founding of Rome"
+    },
+    {
+      "name": "Spring and Autumn Period",
+      "years": "770 BCE to 476 BCE",
+      "predecessor": "Zhou Dynasty",
+      "successor": "Warring States Period",
+      "western_event": "Birth of Buddha"
+    },
+    {
+      "name": "Warring States Period",
+      "years": "475 BCE to 221 BCE",
+      "predecessor": "Spring and Autumn Period",
+      "successor": "Qin Dynasty",
+      "western_event": "Alexander the Great's conquests"
+    },
+    {
+      "name": "Qin Dynasty",
+      "years": "221 BCE to 206 BCE",
+      "predecessor": "Warring States Period",
+      "successor": "Han Dynasty",
+      "western_event": "Hannibal crosses the Alps"
+    },
+    {
+      "name": "Han Dynasty",
+      "years": "206 BCE to 220 CE",
+      "predecessor": "Qin Dynasty",
+      "successor": "Three Kingdoms Period",
+      "western_event": "Birth of Jesus Christ"
+    },
+    {
+      "name": "Three Kingdoms Period",
+      "years": "220 CE to 280 CE",
+      "predecessor": "Han Dynasty",
+      "successor": "Jin Dynasty",
+      "western_event": "Constantine becomes Roman Emperor"
+    },
+    {
+      "name": "Jin Dynasty",
+      "years": "266 CE to 420 CE",
+      "predecessor": "Three Kingdoms Period",
+      "successor": "Northern and Southern Dynasties",
+      "western_event": "Fall of Western Roman Empire"
+    },
+    {
+      "name": "Northern and Southern Dynasties",
+      "years": "420 CE to 589 CE",
+      "predecessor": "Jin Dynasty",
+      "successor": "Sui Dynasty",
+      "western_event": "Byzantine Empire established"
+    },
+    {
+      "name": "Sui Dynasty",
+      "years": "581 CE to 618 CE",
+      "predecessor": "Northern and Southern Dynasties",
+      "successor": "Tang Dynasty",
+      "western_event": "Muhammad's first revelation"
+    },
+    {
+      "name": "Tang Dynasty",
+      "years": "618 CE to 907 CE",
+      "predecessor": "Sui Dynasty",
+      "successor": "Five Dynasties and Ten Kingdoms Period",
+      "western_event": "Charlemagne crowned Holy Roman Emperor"
+    },
+    {
+      "name": "Five Dynasties and Ten Kingdoms Period",
+      "years": "907 CE to 960 CE",
+      "predecessor": "Tang Dynasty",
+      "successor": "Song Dynasty",
+      "western_event": "Viking raids in Europe"
+    },
+    {
+      "name": "Song Dynasty",
+      "years": "960 CE to 1279 CE",
+      "predecessor": "Five Dynasties and Ten Kingdoms Period",
+      "successor": "Yuan Dynasty",
+      "western_event": "Norman Conquest of England"
+    },
+    {
+      "name": "Yuan Dynasty",
+      "years": "1271 CE to 1368 CE",
+      "predecessor": "Song Dynasty",
+      "successor": "Ming Dynasty",
+      "western_event": "Black Death in Europe"
+    },
+    {
+      "name": "Ming Dynasty",
+      "years": "1368 CE to 1644 CE",
+      "predecessor": "Yuan Dynasty",
+      "successor": "Qing Dynasty",
+      "western_event": "Columbus reaches the Americas"
+    },
+    {
+      "name": "Qing Dynasty",
+      "years": "1644 CE to 1912 CE",
+      "predecessor": "Ming Dynasty",
+      "successor": "None",
+      "western_event": "American Revolution"
+    }
+  ]
+}

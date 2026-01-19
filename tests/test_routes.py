@@ -115,8 +115,8 @@ def test_answer_route_correct(client, app, populated_db):
 
         # Submit correct answer (index 2 which is "TestAnswer")
         response = client.post("/answer", data={"answer": 2}, follow_redirects=False)
-        assert response.status_code == 302
-        assert response.location.endswith("/quiz")
+        assert response.status_code == 200  # Now renders result page
+        assert b"CORRECT!" in response.data  # Check for result message
 
         # Check question count NOT incremented (increments in /quiz now)
         with client.session_transaction() as sess:
@@ -148,8 +148,8 @@ def test_answer_route_incorrect(client, app, populated_db):
 
         # Submit incorrect answer (index 1 which is "Wrong2")
         response = client.post("/answer", data={"answer": 1}, follow_redirects=False)
-        assert response.status_code == 302
-        assert response.location.endswith(f"/show_fact/{fact.id}")
+        assert response.status_code == 200  # Now renders result page
+        assert b"INCORRECT" in response.data  # Check for result message
 
         # Check question count not incremented
         with client.session_transaction() as sess:
@@ -222,11 +222,11 @@ def test_full_quiz_flow(client, app, populated_db):
         assert response.status_code == 200
 
         # Verify question count incremented
-        # Note: count is 2 because /quiz was called twice:
-        # 1. After mark_learned (count becomes 1)
-        # 2. After answer redirect (count becomes 2)
+        # Note: count is 1 because /quiz was called once after mark_learned
+        # The answer page now renders a result page (not redirect)
+        # so follow_redirects doesn't trigger /quiz again
         with client.session_transaction() as sess:
-            assert sess["question_count"] == 2
+            assert sess["question_count"] == 1
 
 
 def test_mark_learned_route(client, app, populated_db):
@@ -327,7 +327,8 @@ def test_demotion_flow(client, app, populated_db):
 
         # First wrong answer
         response = client.post("/answer", data={"answer": 1}, follow_redirects=False)
-        assert response.status_code == 302
+        assert response.status_code == 200  # Now renders result page
+        assert b"INCORRECT" in response.data
         assert is_fact_learned(fact.id) is True  # Still learned
 
         # Second wrong answer - should demote
@@ -339,7 +340,8 @@ def test_demotion_flow(client, app, populated_db):
             sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
 
         response = client.post("/answer", data={"answer": 1}, follow_redirects=False)
-        assert response.status_code == 302
+        assert response.status_code == 200  # Now renders result page
+        assert b"INCORRECT" in response.data
         assert is_fact_learned(fact.id) is False  # Demoted to unlearned
 
 
@@ -364,7 +366,8 @@ def test_two_consecutive_correct_flow(client, app, populated_db):
 
         # First correct answer
         response = client.post("/answer", data={"answer": 2}, follow_redirects=False)
-        assert response.status_code == 302
+        assert response.status_code == 200  # Now renders result page
+        assert b"CORRECT!" in response.data
         with client.session_transaction() as sess:
             assert sess.get("pending_quiz_fact_id") == fact.id  # Still pending
 
@@ -377,7 +380,8 @@ def test_two_consecutive_correct_flow(client, app, populated_db):
             sess["options"] = ["Wrong1", "Wrong2", "TestAnswer", "Wrong3"]
 
         response = client.post("/answer", data={"answer": 2}, follow_redirects=False)
-        assert response.status_code == 302
+        assert response.status_code == 200  # Now renders result page
+        assert b"CORRECT!" in response.data
         with client.session_transaction() as sess:
             assert "pending_quiz_fact_id" not in sess  # Cleared
 
@@ -820,9 +824,9 @@ def test_review_question_wrong_answer_shows_fact(client, app, populated_db):
         "/answer", data={"answer": wrong_index}, follow_redirects=False
     )
 
-    # Should redirect to show_fact, not quiz
-    assert response.status_code == 302
-    assert f"/show_fact/{fact0_id}" in response.location
+    # Should show result page with INCORRECT
+    assert response.status_code == 200
+    assert b"INCORRECT" in response.data
 
 
 def test_demotion_during_review_clears_flags(client, app, populated_db):
