@@ -1127,7 +1127,7 @@ def quiz():
             fact = Fact.query.get(recovery_fact_id)
             if fact:
                 question_data = prepare_quiz_question_for_fact(
-                    fact, domain_id, last_question_key, current_user.id
+                    fact, domain_id, last_question_key
                 )
 
                 # Decrement counter
@@ -1166,7 +1166,7 @@ def quiz():
         # Continue quizzing this fact until 2 consecutive correct
         fact = Fact.query.get(pending_fact_id)
         question_data = prepare_quiz_question_for_fact(
-            fact, domain_id, last_question_key, current_user.id
+            fact, domain_id, last_question_key
         )
 
     # Check for pending review fact
@@ -1176,7 +1176,7 @@ def quiz():
 
         if fact:
             question_data = prepare_quiz_question_for_fact(
-                fact, domain_id, last_question_key, current_user.id
+                fact, domain_id, last_question_key
             )
         else:
             # Review fact not found, clear flag and continue
@@ -1191,7 +1191,7 @@ def quiz():
                 else:
                     return "All facts mastered! Great job!", 200
             question_data = prepare_quiz_question_for_fact(
-                fact, domain_id, last_question_key, current_user.id
+                fact, domain_id, last_question_key
             )
 
     # Normal fact selection
@@ -1213,7 +1213,7 @@ def quiz():
                 return "All facts mastered! Great job!", 200
 
         question_data = prepare_quiz_question_for_fact(
-            fact, domain_id, last_question_key, current_user.id
+            fact, domain_id, last_question_key
         )
 
     if not question_data:

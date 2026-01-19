@@ -15,15 +15,15 @@ from models import Fact, record_attempt, mark_fact_learned
 import pytest
 
 
-def test_select_next_fact_with_unlearned_returns_none(app, populated_db):
+def test_select_next_fact_with_unlearned_returns_none(app, populated_db, student_user):
     """Test selecting next fact returns None when unlearned facts exist."""
     with app.app_context():
         # All facts are unlearned, should return None
-        fact = select_next_fact(populated_db.id, 0)
+        fact = select_next_fact(populated_db.id, 0, student_user.id)
         assert fact is None
 
 
-def test_select_next_fact_returns_learned_not_mastered(app, populated_db):
+def test_select_next_fact_returns_learned_not_mastered(app, populated_db, student_user):
     """Test selecting next fact returns learned (not mastered) fact."""
     with app.app_context():
         from models import get_mastery_status
@@ -32,55 +32,55 @@ def test_select_next_fact_returns_learned_not_mastered(app, populated_db):
 
         # Mark all facts as learned
         for fact in all_facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
         facts = all_facts[:2]
 
         # Master first fact
         for i in range(7):
-            record_attempt(facts[0].id, "name", True)
+            record_attempt(facts[0].id, "name", True, student_user.id)
 
         # Select next fact (not on reinforcement question)
-        fact = select_next_fact(populated_db.id, 1)
+        fact = select_next_fact(populated_db.id, 1, student_user.id)
         # Should be a learned but not mastered fact
         assert fact is not None
         assert fact.id != facts[0].id  # Should not be the mastered fact
-        assert not get_mastery_status(fact.id)  # Should not be mastered
+        assert not get_mastery_status(fact.id, student_user.id)  # Should not be mastered
 
 
-def test_select_next_fact_reinforcement_question(app, populated_db):
+def test_select_next_fact_reinforcement_question(app, populated_db, student_user):
     """Test selecting mastered fact on every 10th question."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
 
         # Mark all facts as learned
         for fact in facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
         # Master first fact
         for i in range(7):
-            record_attempt(facts[0].id, "name", True)
+            record_attempt(facts[0].id, "name", True, student_user.id)
 
         # Question 10 should select mastered fact for reinforcement
-        fact = select_next_fact(populated_db.id, 10)
+        fact = select_next_fact(populated_db.id, 10, student_user.id)
         assert fact.id == facts[0].id
 
 
-def test_select_next_fact_reinforcement_no_mastered(app, populated_db):
+def test_select_next_fact_reinforcement_no_mastered(app, populated_db, student_user):
     """Test reinforcement question when no facts mastered yet."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
 
         # Mark all facts as learned
         for fact in facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
         # No mastered facts, should return a learned fact
-        fact = select_next_fact(populated_db.id, 10)
+        fact = select_next_fact(populated_db.id, 10, student_user.id)
         assert fact is not None
 
 
-def test_select_next_fact_least_practiced(app, populated_db):
+def test_select_next_fact_least_practiced(app, populated_db, student_user):
     """Test selecting least-practiced learned fact."""
     with app.app_context():
         from models import get_attempt_count
@@ -89,20 +89,20 @@ def test_select_next_fact_least_practiced(app, populated_db):
 
         # Mark all facts as learned
         for fact in facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
         # Add some attempts to first two facts
-        record_attempt(facts[0].id, "name", False)
-        record_attempt(facts[1].id, "name", False)
-        record_attempt(facts[1].id, "name", False)
+        record_attempt(facts[0].id, "name", False, student_user.id)
+        record_attempt(facts[1].id, "name", False, student_user.id)
+        record_attempt(facts[1].id, "name", False, student_user.id)
 
         # Add attempts to all but one fact
         for fact in facts[2:-1]:
-            record_attempt(fact.id, "name", False)
+            record_attempt(fact.id, "name", False, student_user.id)
 
         # Last fact has no attempts, should be selected
-        selected = select_next_fact(populated_db.id, 1)
-        assert get_attempt_count(selected.id) == 0
+        selected = select_next_fact(populated_db.id, 1, student_user.id)
+        assert get_attempt_count(selected.id, student_user.id) == 0
         assert selected.id == facts[-1].id
 
 
@@ -201,15 +201,15 @@ def test_generate_question_shuffles_options(app, populated_db):
         assert len(set(correct_indices)) > 1
 
 
-def test_prepare_quiz_question(app, populated_db):
+def test_prepare_quiz_question(app, populated_db, student_user):
     """Test preparing a complete quiz question."""
     with app.app_context():
         # Mark all facts as learned so quiz can proceed
         all_facts = Fact.query.filter_by(domain_id=populated_db.id).all()
         for fact in all_facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
-        question_data = prepare_quiz_question(populated_db.id, 0)
+        question_data = prepare_quiz_question(populated_db.id, 0, student_user.id)
 
         assert question_data is not None
         assert "question" in question_data
@@ -228,7 +228,7 @@ def test_prepare_quiz_question(app, populated_db):
         assert fact.domain_id == populated_db.id
 
 
-def test_prepare_quiz_question_no_facts(app):
+def test_prepare_quiz_question_no_facts(app, student_user):
     """Test preparing quiz question with no facts returns None."""
     with app.app_context():
         from models import Domain, db
@@ -238,40 +238,40 @@ def test_prepare_quiz_question_no_facts(app):
         db.session.add(domain)
         db.session.commit()
 
-        question_data = prepare_quiz_question(domain.id, 0)
+        question_data = prepare_quiz_question(domain.id, 0, student_user.id)
         assert question_data is None
 
 
-def test_get_next_unlearned_fact(app, populated_db):
+def test_get_next_unlearned_fact(app, populated_db, student_user):
     """Test getting next unlearned fact."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
 
         # All facts are unlearned
-        next_fact = get_next_unlearned_fact(populated_db.id)
+        next_fact = get_next_unlearned_fact(populated_db.id, student_user.id)
         assert next_fact is not None
         assert next_fact.domain_id == populated_db.id
 
         # Mark first fact as learned
-        mark_fact_learned(facts[0].id)
+        mark_fact_learned(facts[0].id, student_user.id)
 
         # Should still get an unlearned fact
-        next_fact = get_next_unlearned_fact(populated_db.id)
+        next_fact = get_next_unlearned_fact(populated_db.id, student_user.id)
         assert next_fact is not None
         assert next_fact.id != facts[0].id
 
 
-def test_get_next_unlearned_fact_all_learned(app, populated_db):
+def test_get_next_unlearned_fact_all_learned(app, populated_db, student_user):
     """Test getting next unlearned fact when all facts are learned."""
     with app.app_context():
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
 
         # Mark all facts as learned
         for fact in facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
         # Should return None
-        next_fact = get_next_unlearned_fact(populated_db.id)
+        next_fact = get_next_unlearned_fact(populated_db.id, student_user.id)
         assert next_fact is None
 
 
@@ -381,16 +381,16 @@ def test_generate_question_bidirectional(app, populated_db):
         assert question_data1["question"] != question_data2["question"]
 
 
-def test_prepare_quiz_question_avoids_consecutive_duplicate(app, populated_db):
+def test_prepare_quiz_question_avoids_consecutive_duplicate(app, populated_db, student_user):
     """Test that prepare_quiz_question avoids consecutive duplicates."""
     with app.app_context():
         # Mark all facts as learned
         all_facts = Fact.query.filter_by(domain_id=populated_db.id).all()
         for fact in all_facts:
-            mark_fact_learned(fact.id)
+            mark_fact_learned(fact.id, student_user.id)
 
         # Generate first question
-        question_data1 = prepare_quiz_question(populated_db.id, 0)
+        question_data1 = prepare_quiz_question(populated_db.id, 0, student_user.id)
         last_key = (
             f"{question_data1['fact_id']}:"
             f"{question_data1['context_field']}:"
