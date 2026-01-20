@@ -6,6 +6,11 @@
 
 {% block content %}
 <div class="content">
+    <div class="navigation" style="margin-bottom: 20px;">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn-view" style="background-color: #2a5a2a;">[ADMIN PANEL]</a>
+        <a href="{{ url_for('teacher.domains') }}" class="btn-view">[TEST DOMAINS]</a>
+    </div>
+
     <h2>&gt; SYSTEM OVERVIEW</h2>
 
     <div class="stats">

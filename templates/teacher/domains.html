@@ -7,8 +7,13 @@
 {% block content %}
 <div class="content">
     <div class="navigation" style="margin-bottom: 20px;">
-        <a href="{{ url_for('teacher.dashboard') }}" class="btn-view">[MY STUDENTS]</a>
-        <a href="{{ url_for('teacher.domains') }}" class="btn-view" style="background-color: #2a5a2a;">[MY DOMAINS]</a>
+        {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('admin.dashboard') }}" class="btn-view">[ADMIN PANEL]</a>
+            <a href="{{ url_for('teacher.domains') }}" class="btn-view" style="background-color: #2a5a2a;">[TEST DOMAINS]</a>
+        {% else %}
+            <a href="{{ url_for('teacher.dashboard') }}" class="btn-view">[MY STUDENTS]</a>
+            <a href="{{ url_for('teacher.domains') }}" class="btn-view" style="background-color: #2a5a2a;">[MY DOMAINS]</a>
+        {% endif %}
     </div>
 
     {% set my_domains = domain_data | selectattr('created_by_me', 'equalto', true) | list %}

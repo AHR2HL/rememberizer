@@ -75,6 +75,21 @@ def singularize_filter(domain_name):
 def init_database():
     """Initialize database and load fact domains."""
     global _db_initialized
+
+    # Check if database already exists and has tables
+    if os.path.exists("database.db"):
+        # Database file exists - check if it has tables
+        try:
+            with app.app_context():
+                # Try to query domains table
+                existing_domains = Domain.query.count()
+                print(f"Database exists with {existing_domains} domains")
+                _db_initialized = True
+                return  # Database is already set up
+        except Exception:
+            # Table doesn't exist, continue with initialization
+            print("Database file exists but tables missing, initializing...")
+
     if _db_initialized:
         return
 

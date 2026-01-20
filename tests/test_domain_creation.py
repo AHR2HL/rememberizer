@@ -498,3 +498,68 @@ Lincoln,Republican,1861-1865"""
         domain = Domain.query.filter_by(name="US Presidents CSV").first()
         assert domain is not None
         assert len(domain.facts) == 4
+
+
+def test_admin_can_access_domains_page(app, authenticated_admin):
+    """Test that admins can access the domains testing page."""
+    client = authenticated_admin
+
+    response = client.get("/teacher/domains")
+    assert response.status_code == 200
+    assert b"MY DOMAINS" in response.data or b"TEST DOMAINS" in response.data
+
+
+def test_admin_can_test_domain(app, authenticated_admin, admin_user):
+    """Test that admins can start quiz on visible domains."""
+    # Create a published domain
+    with app.app_context():
+        field_names = ["name", "value"]
+        facts_data = [{"name": f"Fact{i}", "value": f"Value{i}"} for i in range(1, 5)]
+
+        domain = create_custom_domain(
+            name="Admin Test Domain",
+            field_names=field_names,
+            facts_data=facts_data,
+            created_by=admin_user.id,
+            organization_id=admin_user.organization_id,
+        )
+
+        update_domain_published_status(domain.id, True)
+        domain_id = domain.id
+
+    # Test starting quiz as admin
+    client = authenticated_admin
+    response = client.post(
+        "/start", data={"domain_id": domain_id}, follow_redirects=True
+    )
+    assert response.status_code == 200
+
+
+def test_admin_can_see_all_org_domains(app, admin_user):
+    """Test that admins can see all domains in their organization."""
+    with app.app_context():
+        # Create a teacher in same org
+        teacher = create_user(
+            email="teacher_test@test.com",
+            password="password123",
+            role="teacher",
+            first_name="Test",
+            last_name="Teacher",
+            organization_id=admin_user.organization_id,
+        )
+
+        # Create org-scoped domain by teacher
+        field_names = ["name", "value"]
+        facts_data = [{"name": f"Fact{i}", "value": f"Value{i}"} for i in range(1, 5)]
+
+        domain = create_custom_domain(
+            name="Org Domain",
+            field_names=field_names,
+            facts_data=facts_data,
+            created_by=teacher.id,
+            organization_id=admin_user.organization_id,
+        )
+
+        # Admin should see it (same org)
+        visible_domains = get_visible_domains(admin_user.id, admin_user.organization_id)
+        assert domain in visible_domains
