@@ -2,7 +2,8 @@
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import current_user, login_required
-from models import db, User, Domain, create_user
+from models import db, User, Domain
+from services.user_service import create_user
 import json
 import csv
 import io
@@ -28,14 +29,10 @@ def require_teacher_or_admin():
 @login_required
 def dashboard():
     """Teacher dashboard showing all students and their progress."""
-    from models import (
-        get_students_by_teacher,
-        get_user_domains,
-        get_progress_string,
-        Domain,
-        get_questions_answered_today,
-        Attempt,
-    )
+    from services.user_service import get_students_by_teacher
+    from services.domain_service import get_user_domains
+    from services.progress_service import get_progress_string, get_questions_answered_today
+    from models import Domain, Attempt
 
     require_teacher_or_admin()
 
@@ -86,10 +83,8 @@ def dashboard():
 @login_required
 def domains():
     """List all available domains with testing option."""
-    from models import (
-        get_visible_domains,
-        get_student_domain_progress,
-    )
+    from services.domain_service import get_visible_domains
+    from services.progress_service import get_student_domain_progress
 
     require_teacher_or_admin()
 
@@ -160,7 +155,7 @@ def create_domain():
             facts_data = [row for row in csv_reader]
 
             # Create domain
-            from models import create_custom_domain
+            from services.domain_service import create_custom_domain
 
             domain = create_custom_domain(
                 name=domain_name,
@@ -214,7 +209,7 @@ def create_domain():
 
         # Create domain and facts
         try:
-            from models import create_custom_domain
+            from services.domain_service import create_custom_domain
 
             domain = create_custom_domain(
                 name=domain_name,
@@ -236,7 +231,7 @@ def create_domain():
 @login_required
 def toggle_publish_domain(domain_id):
     """Publish or unpublish a domain (creator only)."""
-    from models import update_domain_published_status
+    from services.domain_service import update_domain_published_status
 
     require_teacher_or_admin()
 
@@ -309,17 +304,15 @@ def create_student():
 @login_required
 def student_detail(student_id):
     """View detailed student progress."""
-    from models import (
-        User,
-        get_user_domains,
+    from services.domain_service import get_user_domains
+    from services.progress_service import (
         get_student_domain_progress,
-        Domain,
         get_questions_answered_today,
         get_total_time_spent,
         get_unique_session_count,
         format_time_spent,
-        Attempt,
     )
+    from models import User, Domain, Attempt
 
     require_teacher_or_admin()
 
@@ -373,7 +366,8 @@ def student_detail(student_id):
 @login_required
 def assign_domain_to_student(student_id):
     """Assign a domain to a student."""
-    from models import User, assign_domain_to_user
+    from services.domain_service import assign_domain_to_user
+    from models import User
 
     require_teacher_or_admin()
 
@@ -407,7 +401,8 @@ def assign_domain_to_student(student_id):
 @login_required
 def unassign_domain_from_student(student_id):
     """Unassign a domain from a student."""
-    from models import User, unassign_domain_from_user
+    from services.domain_service import unassign_domain_from_user
+    from models import User
 
     require_teacher_or_admin()
 
@@ -443,7 +438,8 @@ def unassign_domain_from_student(student_id):
 @login_required
 def reset_student_domain_progress(student_id, domain_id):
     """Reset a student's progress for a specific domain."""
-    from models import User, reset_domain_progress, Domain
+    from services.fact_service import reset_domain_progress
+    from models import User, Domain
 
     require_teacher_or_admin()
 

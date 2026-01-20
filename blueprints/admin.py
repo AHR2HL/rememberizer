@@ -2,7 +2,8 @@
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import current_user, login_required
-from models import db, User, Domain, create_user
+from models import db, User, Domain
+from services.user_service import create_user
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 

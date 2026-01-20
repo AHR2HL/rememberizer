@@ -1,11 +1,7 @@
 """Tests for database models and mastery logic."""
 
-from models import (
-    db,
-    Domain,
-    Fact,
-    Attempt,
-    FactState,
+from models import db, Domain, Fact, Attempt, FactState
+from services.fact_service import (
     get_mastery_status,
     get_mastered_facts,
     record_attempt,
@@ -19,8 +15,8 @@ from models import (
     update_consecutive_attempts,
     has_two_consecutive_correct,
     reset_domain_progress,
-    get_progress_string,
 )
+from services.progress_service import get_progress_string
 
 
 def test_domain_creation(app):

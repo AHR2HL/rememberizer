@@ -1,9 +1,7 @@
 """Tests for Flask routes."""
 
-from models import (
-    Fact,
-    Attempt,
-    FactState,
+from models import Fact, Attempt, FactState
+from services.fact_service import (
     mark_fact_learned,
     is_fact_learned,
     record_attempt,
@@ -281,8 +279,6 @@ def test_reset_domain_route(authenticated_student, app, assigned_domain, student
 
         # Add some progress
         mark_fact_learned(fact.id, student_user.id)
-        from models import record_attempt
-
         record_attempt(fact.id, "name", True, student_user.id)
 
         # Initialize session
@@ -321,8 +317,6 @@ def test_reset_domain_from_menu_route(
 
         # Add some progress
         mark_fact_learned(fact.id, student_user.id)
-        from models import record_attempt
-
         record_attempt(fact.id, "name", True, student_user.id)
 
         # Initialize session with user_id

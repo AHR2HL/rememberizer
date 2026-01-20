@@ -48,7 +48,7 @@ def center_in_box(text, width=35):
 @app.template_filter("progress_string")
 def progress_string_filter(domain_id):
     """Generate progress string for a domain for the current user."""
-    from models import get_progress_string
+    from services.progress_service import get_progress_string
     from flask_login import current_user
 
     # If user is not authenticated, return empty string
@@ -86,7 +86,7 @@ def init_database():
         load_all_domains_from_directory("facts")
 
         # Check if admin account exists
-        from models import create_user
+        from services.user_service import create_user
 
         admin = User.query.filter_by(role="admin").first()
 

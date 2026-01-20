@@ -4,14 +4,9 @@ import os
 import tempfile
 import pytest
 from app import app as flask_app
-from models import (
-    db,
-    Domain,
-    Fact,
-    Organization,
-    create_user,
-    assign_domain_to_user,
-)
+from models import db, Domain, Fact, Organization
+from services.user_service import create_user
+from services.domain_service import assign_domain_to_user
 
 
 @pytest.fixture(scope="function")
@@ -232,7 +227,7 @@ def assigned_domain(app, student_user, populated_db, teacher_user):
 def user_with_progress(app, student_user, assigned_domain):
     """Create a student with some quiz progress."""
     with app.app_context():
-        from models import mark_fact_learned, record_attempt
+        from services.fact_service import mark_fact_learned, record_attempt
 
         # Get facts
         facts = Fact.query.filter_by(domain_id=assigned_domain.id).limit(3).all()

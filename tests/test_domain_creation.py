@@ -2,18 +2,14 @@
 
 import json
 import io
-from models import (
-    db,
-    Domain,
-    Fact,
-    Organization,
-    User,
+from models import db, Domain, Fact, Organization, User
+from services.domain_service import (
     create_custom_domain,
     update_domain_published_status,
     get_visible_domains,
     is_domain_visible_to_teacher,
-    create_user,
 )
+from services.user_service import create_user
 
 
 def test_create_custom_domain_success(app):

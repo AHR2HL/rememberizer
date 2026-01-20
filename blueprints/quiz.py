@@ -2,10 +2,8 @@
 
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from flask_login import current_user
-from models import (
-    db,
-    Domain,
-    Fact,
+from models import db, Domain, Fact
+from services.fact_service import (
     mark_fact_learned,
     mark_fact_shown,
     record_attempt,
@@ -13,6 +11,8 @@ from models import (
     reset_domain_progress,
     update_consecutive_attempts,
     get_learned_facts,
+)
+from services.domain_service import (
     is_domain_assigned,
     is_domain_visible_to_teacher,
 )

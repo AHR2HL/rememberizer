@@ -2,8 +2,8 @@
 
 from flask import Blueprint, render_template, redirect, url_for, abort
 from flask_login import current_user, login_required
-from models import (
-    get_user_domains,
+from services.domain_service import get_user_domains
+from services.progress_service import (
     get_student_domain_progress,
     get_questions_answered_today,
     get_total_time_spent,

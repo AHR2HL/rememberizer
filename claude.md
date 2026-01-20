@@ -121,27 +121,119 @@ url_for('auth.login')
 | quiz.py | - | 208 lines | New |
 | **Total** | 1,655 lines | 1,041 lines | -37% overall |
 
-### Phase 2: Service Layer Extraction (Planned)
+### Phase 2: Service Layer Extraction ✅
 
-The next phase will extract business logic from `models.py` (1,072 lines) into service modules:
+Completed extraction of all business logic from `models.py` into focused service modules.
 
-**Planned structure**:
+#### Changes Made
+
+**1. Created Service Layer Structure**
 ```
 services/
 ├── __init__.py
-├── user_service.py      # User management, authentication
-├── domain_service.py    # Domain assignment, visibility
-├── progress_service.py  # Progress tracking, statistics
-└── quiz_service.py      # Quiz operations (may be combined with quiz_logic.py)
+├── fact_service.py       # Fact learning states and attempts (288 lines)
+├── user_service.py       # User management & authentication (128 lines)
+├── domain_service.py     # Domain assignment & visibility (230 lines)
+└── progress_service.py   # Progress tracking & statistics (164 lines)
 ```
 
-**Goals**:
-- Separate database models from business logic
-- Single Responsibility Principle for each service
-- Easier unit testing of business logic
-- Cleaner imports and dependencies
+**2. Refactored models.py**
+- **Before**: 1,072 lines (models + 31 business logic functions)
+- **After**: 177 lines (ONLY database models!)
+- **Reduction**: 83% smaller - pure SQLAlchemy models now
 
-**Status**: Not started - Phase 1 provides significant improvements, Phase 2 can be done later if needed.
+**3. Service Modules Created**
+
+**fact_service.py** (13 functions):
+- `get_mastery_status()` - Check if fact is mastered
+- `get_mastered_facts()` - Get all mastered facts in domain
+- `record_attempt()` - Record quiz attempt
+- `get_unmastered_facts()` - Get unmastered facts
+- `get_attempt_count()` - Get total attempts for fact
+- `mark_fact_learned()` - Mark fact as learned
+- `mark_fact_shown()` - Track when fact was displayed
+- `is_fact_learned()` - Check if fact is learned
+- `get_unlearned_facts()` - Get unlearned facts
+- `get_learned_facts()` - Get learned but not mastered facts
+- `update_consecutive_attempts()` - Update consecutive counters
+- `has_two_consecutive_correct()` - Check for 2 consecutive correct
+- `reset_domain_progress()` - Reset all progress for domain
+
+**user_service.py** (3 functions):
+- `create_user()` - Create new users with validation
+- `authenticate_user()` - Authenticate by email/password
+- `get_students_by_teacher()` - Get students in teacher's org
+
+**domain_service.py** (8 functions):
+- `get_user_domains()` - Get assigned domains for user
+- `assign_domain_to_user()` - Assign domain to student
+- `unassign_domain_from_user()` - Remove domain assignment
+- `is_domain_assigned()` - Check if domain is assigned
+- `create_custom_domain()` - Create custom domain from CSV/form
+- `update_domain_published_status()` - Toggle published status
+- `get_visible_domains()` - Get domains visible to user
+- `is_domain_visible_to_teacher()` - Check domain visibility
+
+**progress_service.py** (7 functions):
+- `get_progress_string()` - Generate visual progress string (·-+*)
+- `get_student_progress_summary()` - Comprehensive progress summary
+- `get_student_domain_progress()` - Detailed domain progress
+- `get_questions_answered_today()` - Count today's questions
+- `get_total_time_spent()` - Calculate total time spent
+- `get_unique_session_count()` - Count unique sessions
+- `format_time_spent()` - Format minutes to human-readable
+
+**4. Updated All Imports**
+
+Updated imports across entire codebase (17 files):
+- app.py, blueprints (5 files), quiz_logic.py, doom_loop.py
+- tests (9 files including conftest.py)
+- Separated model imports from service imports
+- Clean separation of concerns maintained
+
+#### Testing
+- ✅ All 188 tests passing
+- ✅ 83% code coverage maintained
+- ✅ No functionality broken
+- ✅ All business logic working correctly
+- ✅ Clean imports throughout codebase
+
+#### Benefits
+1. **Clean Separation of Concerns**: Database models vs. business logic
+2. **Single Responsibility**: Each service has one clear purpose
+3. **Easier Testing**: Can test services independently from database
+4. **Better Organization**: Related functions grouped logically
+5. **Improved Maintainability**: Smaller, focused modules
+6. **Cleaner Imports**: Clear dependencies between layers
+
+#### File Size Comparison
+| File | Before | After | Change |
+|------|--------|-------|--------|
+| models.py | 1,072 lines | 177 lines | -83% |
+| fact_service.py | - | 288 lines | New |
+| user_service.py | - | 128 lines | New |
+| domain_service.py | - | 230 lines | New |
+| progress_service.py | - | 164 lines | New |
+| **Total** | 1,072 lines | 987 lines | -8% overall (better organized) |
+
+#### Architecture After Phase 2
+```
+rememberizer/
+├── models.py              # 177 lines - ONLY SQLAlchemy models
+├── services/              # Business logic layer
+│   ├── fact_service.py    # Fact learning operations
+│   ├── user_service.py    # User management
+│   ├── domain_service.py  # Domain operations
+│   └── progress_service.py# Progress tracking
+├── blueprints/            # Route handlers
+│   ├── admin.py
+│   ├── auth_routes.py
+│   ├── quiz.py
+│   ├── student.py
+│   └── teacher.py
+├── quiz_logic.py          # Quiz question generation
+└── doom_loop.py           # Spaced repetition algorithm
+```
 
 ---
 

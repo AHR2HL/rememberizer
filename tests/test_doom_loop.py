@@ -1,13 +1,8 @@
 """Tests for doom loop detection and recovery functionality."""
 
 from doom_loop import check_doom_loop_trigger, select_recovery_fact
-from models import (
-    Domain,
-    Fact,
-    db,
-    mark_fact_learned,
-    record_attempt,
-)
+from models import Domain, Fact, db
+from services.fact_service import mark_fact_learned, record_attempt
 
 
 class TestDoomLoopDetection:

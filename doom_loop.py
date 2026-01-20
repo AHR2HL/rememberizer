@@ -1,10 +1,7 @@
 """Doom loop detection and recovery logic."""
 
-from models import (
-    Attempt,
-    get_learned_facts,
-    get_mastery_status,
-)
+from models import Attempt
+from services.fact_service import get_learned_facts, get_mastery_status
 
 
 def check_doom_loop_trigger(recent_attempts):
