@@ -11,7 +11,6 @@ NOTE: This migration preserves all existing data.
 """
 
 import sqlite3
-from datetime import datetime
 
 
 def run_migration(db_path="database.db"):

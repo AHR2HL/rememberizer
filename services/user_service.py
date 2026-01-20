@@ -5,7 +5,7 @@ import secrets
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from models import db, User, Organization
+from models import db, User
 
 
 def create_user(

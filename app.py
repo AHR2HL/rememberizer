@@ -2,7 +2,7 @@
 
 import os
 from flask import Flask
-from models import db, Domain, Fact, User, Organization
+from models import db, Domain, User, Organization
 from facts_loader import load_all_domains_from_directory
 from auth import login_manager
 

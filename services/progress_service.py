@@ -175,8 +175,6 @@ def get_questions_answered_today(user_id):
     Returns:
         int: Number of attempts today
     """
-    from datetime import datetime
-
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
     count = Attempt.query.filter(

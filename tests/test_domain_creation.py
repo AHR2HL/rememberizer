@@ -2,7 +2,7 @@
 
 import json
 import io
-from models import db, Domain, Fact, Organization, User
+from models import db, Domain, Fact, Organization
 from services.domain_service import (
     create_custom_domain,
     update_domain_published_status,

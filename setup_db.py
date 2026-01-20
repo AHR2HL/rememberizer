@@ -1,13 +1,13 @@
 """Setup database properly."""
 
-import sys
 import os
 
 # Make sure we're in the right directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 from app import app
-from models import db, Domain, Organization, User, Fact, create_user
+from models import db, Domain, Organization
+from services.user_service import create_user
 from facts_loader import load_all_domains_from_directory
 
 if __name__ == "__main__":

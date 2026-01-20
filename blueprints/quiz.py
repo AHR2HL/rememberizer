@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from flask_login import current_user
-from models import db, Domain, Fact
+from models import Domain, Fact
 from services.fact_service import (
     mark_fact_learned,
     mark_fact_shown,
