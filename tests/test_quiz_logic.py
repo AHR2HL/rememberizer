@@ -11,7 +11,8 @@ from quiz_logic import (
     prepare_quiz_question_for_fact,
     singularize_domain_name,
 )
-from models import Fact, record_attempt, mark_fact_learned
+from models import Fact
+from services.fact_service import record_attempt, mark_fact_learned
 import pytest
 
 
@@ -26,7 +27,7 @@ def test_select_next_fact_with_unlearned_returns_none(app, populated_db, student
 def test_select_next_fact_returns_learned_not_mastered(app, populated_db, student_user):
     """Test selecting next fact returns learned (not mastered) fact."""
     with app.app_context():
-        from models import get_mastery_status
+        from services.fact_service import get_mastery_status
 
         all_facts = Fact.query.filter_by(domain_id=populated_db.id).all()
 
@@ -85,7 +86,7 @@ def test_select_next_fact_reinforcement_no_mastered(app, populated_db, student_u
 def test_select_next_fact_least_practiced(app, populated_db, student_user):
     """Test selecting least-practiced learned fact."""
     with app.app_context():
-        from models import get_attempt_count
+        from services.fact_service import get_attempt_count
 
         facts = Fact.query.filter_by(domain_id=populated_db.id).all()
 

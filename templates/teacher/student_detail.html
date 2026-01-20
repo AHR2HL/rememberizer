@@ -60,17 +60,17 @@
             </div>
             <div>
                 {% if detail.is_assigned %}
-                    <form method="POST" action="{{ url_for('unassign_domain_from_student', student_id=student.id) }}" style="display: inline;">
+                    <form method="POST" action="{{ url_for('teacher.unassign_domain_from_student', student_id=student.id) }}" style="display: inline;">
                         <input type="hidden" name="domain_id" value="{{ detail.domain.id }}">
                         <button type="submit" class="btn-danger" onclick="return confirm('Unassign this domain?');">[UNASSIGN]</button>
                     </form>
                     {% if detail.progress and detail.progress.attempt_count > 0 %}
-                    <form method="POST" action="{{ url_for('reset_student_domain_progress', student_id=student.id, domain_id=detail.domain.id) }}" style="display: inline;">
+                    <form method="POST" action="{{ url_for('teacher.reset_student_domain_progress', student_id=student.id, domain_id=detail.domain.id) }}" style="display: inline;">
                         <button type="submit" class="btn-danger" onclick="return confirm('Reset all progress for this domain?');">[RESET PROGRESS]</button>
                     </form>
                     {% endif %}
                 {% else %}
-                    <form method="POST" action="{{ url_for('assign_domain_to_student', student_id=student.id) }}" style="display: inline;">
+                    <form method="POST" action="{{ url_for('teacher.assign_domain_to_student', student_id=student.id) }}" style="display: inline;">
                         <input type="hidden" name="domain_id" value="{{ detail.domain.id }}">
                         <button type="submit" class="btn-view">[ASSIGN]</button>
                     </form>
@@ -81,7 +81,7 @@
     </div>
 
     <div class="button-container">
-        <a href="{{ url_for('teacher_dashboard') }}" class="action-button">[BACK TO DASHBOARD]</a>
+        <a href="{{ url_for('teacher.dashboard') }}" class="action-button">[BACK TO DASHBOARD]</a>
     </div>
 </div>
 {% endblock %}

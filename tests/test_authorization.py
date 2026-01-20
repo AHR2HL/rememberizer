@@ -124,7 +124,8 @@ class TestOrganizationIsolation:
         """Test that teacher only sees students from their organization."""
         with app.app_context():
             # Create a second organization and student
-            from models import Organization, create_user, db
+            from models import Organization, db
+            from services.user_service import create_user
 
             org2 = Organization(name="Other Organization")
             db.session.add(org2)

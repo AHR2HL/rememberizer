@@ -18,7 +18,7 @@
         {% if current_user.is_authenticated %}
         <div class="user-info">
             <p>Logged in as: {{ current_user.get_full_name() }} ({{ current_user.role }})
-               <a href="{{ url_for('logout') }}" class="logout-link">[LOGOUT]</a>
+               <a href="{{ url_for('auth.logout') }}" class="logout-link">[LOGOUT]</a>
             </p>
         </div>
         {% endif %}

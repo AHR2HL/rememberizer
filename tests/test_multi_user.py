@@ -1,15 +1,15 @@
 """Tests for multi-user progress isolation and functionality."""
 
 import pytest
-from models import (
+from models import Fact
+from services.fact_service import (
     is_fact_learned,
     get_learned_facts,
     mark_fact_learned,
     record_attempt,
     reset_domain_progress,
-    get_student_domain_progress,
-    Fact,
 )
+from services.progress_service import get_student_domain_progress
 
 
 class TestProgressIsolation:
@@ -100,7 +100,10 @@ class TestDomainAssignment:
     ):
         """Test assigning a domain to a student."""
         with app.app_context():
-            from models import assign_domain_to_user, is_domain_assigned
+            from services.domain_service import (
+                assign_domain_to_user,
+                is_domain_assigned,
+            )
 
             # Assign domain
             assign_domain_to_user(student_user.id, populated_db.id, teacher_user.id)
@@ -113,7 +116,7 @@ class TestDomainAssignment:
     ):
         """Test that assigning duplicate domain raises error."""
         with app.app_context():
-            from models import assign_domain_to_user
+            from services.domain_service import assign_domain_to_user
 
             with pytest.raises(ValueError, match="already assigned"):
                 assign_domain_to_user(
@@ -123,7 +126,10 @@ class TestDomainAssignment:
     def test_unassign_domain_from_student(self, app, student_user, assigned_domain):
         """Test unassigning a domain from a student."""
         with app.app_context():
-            from models import unassign_domain_from_user, is_domain_assigned
+            from services.domain_service import (
+                unassign_domain_from_user,
+                is_domain_assigned,
+            )
 
             # Unassign domain
             unassign_domain_from_user(student_user.id, assigned_domain.id)
@@ -134,7 +140,7 @@ class TestDomainAssignment:
     def test_get_user_domains(self, app, student_user, assigned_domain):
         """Test getting assigned domains for a user."""
         with app.app_context():
-            from models import get_user_domains
+            from services.domain_service import get_user_domains
 
             domains = get_user_domains(student_user.id)
             assert len(domains) == 1
@@ -147,7 +153,7 @@ class TestStudentManagement:
     def test_get_students_by_teacher(self, app, teacher_user, student_user):
         """Test retrieving students created by teacher."""
         with app.app_context():
-            from models import get_students_by_teacher
+            from services.user_service import get_students_by_teacher
 
             students = get_students_by_teacher(teacher_user.id)
             assert len(students) >= 1
@@ -156,7 +162,7 @@ class TestStudentManagement:
     def test_get_student_progress_summary(self, app, student_user, assigned_domain):
         """Test getting student progress summary."""
         with app.app_context():
-            from models import get_student_progress_summary, mark_fact_learned, Fact
+            from services.progress_service import get_student_progress_summary
 
             # Add some progress
             facts = Fact.query.filter_by(domain_id=assigned_domain.id).limit(2).all()
@@ -190,7 +196,7 @@ class TestEngagementMetrics:
     def test_questions_answered_today(self, app, user_with_progress):
         """Test getting questions answered today."""
         with app.app_context():
-            from models import get_questions_answered_today
+            from services.progress_service import get_questions_answered_today
 
             count = get_questions_answered_today(user_with_progress.id)
             assert count == 5  # From user_with_progress fixture
@@ -198,7 +204,7 @@ class TestEngagementMetrics:
     def test_total_time_spent(self, app, user_with_progress):
         """Test calculating total time spent."""
         with app.app_context():
-            from models import get_total_time_spent
+            from services.progress_service import get_total_time_spent
 
             time_spent = get_total_time_spent(user_with_progress.id)
             assert time_spent >= 0  # Should be non-negative
@@ -206,7 +212,7 @@ class TestEngagementMetrics:
     def test_unique_session_count(self, app, user_with_progress):
         """Test counting unique sessions."""
         with app.app_context():
-            from models import get_unique_session_count
+            from services.progress_service import get_unique_session_count
 
             session_count = get_unique_session_count(user_with_progress.id)
             assert session_count == 1  # All attempts in fixture use 'session1'
@@ -214,7 +220,7 @@ class TestEngagementMetrics:
     def test_format_time_spent(self, app):
         """Test time formatting."""
         with app.app_context():
-            from models import format_time_spent
+            from services.progress_service import format_time_spent
 
             assert format_time_spent(30) == "30m"
             assert format_time_spent(60) == "1h"
@@ -261,7 +267,8 @@ class TestTeacherStudentOperations:
         """Test that teacher cannot access students from other organizations."""
         with app.app_context():
             # Create other org and student
-            from models import Organization, create_user, db
+            from models import Organization, db
+            from services.user_service import create_user
 
             org2 = Organization(name="Other Org")
             db.session.add(org2)

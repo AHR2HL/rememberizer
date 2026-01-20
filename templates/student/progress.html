@@ -43,7 +43,7 @@
                     {% endif %}
                 </div>
                 <div>
-                    <form method="POST" action="{{ url_for('start') }}" style="display: inline;">
+                    <form method="POST" action="{{ url_for('quiz.start') }}" style="display: inline;">
                         <input type="hidden" name="domain_id" value="{{ data.domain.id }}">
                         <button type="submit" class="btn-view">[PRACTICE]</button>
                     </form>
@@ -59,7 +59,7 @@
     {% endif %}
 
     <div class="button-container">
-        <a href="{{ url_for('student_domains') }}" class="action-button">[BACK TO DOMAINS]</a>
+        <a href="{{ url_for('student.domains') }}" class="action-button">[BACK TO DOMAINS]</a>
     </div>
 </div>
 {% endblock %}

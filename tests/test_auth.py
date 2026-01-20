@@ -1,7 +1,8 @@
 """Tests for authentication functionality."""
 
 import pytest
-from models import User, authenticate_user, create_user
+from models import User
+from services.user_service import authenticate_user, create_user
 from werkzeug.security import check_password_hash
 
 

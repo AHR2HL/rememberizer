@@ -2,12 +2,10 @@
 
 import random
 from datetime import datetime
-from models import (
-    Fact,
-    FactState,
+from models import Fact, FactState, Domain
+from services.fact_service import (
     get_mastered_facts,
     get_attempt_count,
-    Domain,
     get_unlearned_facts,
     get_learned_facts,
     is_fact_learned,

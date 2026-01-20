@@ -77,7 +77,14 @@ def populate_database(domain_dict, filename):
         raise ValueError(f"Domain '{domain_name}' already exists in database")
 
     # Create domain
-    domain = Domain(name=domain_name, filename=filename)
+    # JSON domains are system domains, globally available to all users
+    domain = Domain(
+        name=domain_name,
+        filename=filename,
+        is_published=True,  # Make globally visible
+        created_by=None,  # System domain, no creator
+        organization_id=None,  # Global domain, not org-scoped
+    )
     domain.set_field_names(domain_dict["fields"])
     db.session.add(domain)
     db.session.flush()  # Get domain.id before adding facts
