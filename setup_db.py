@@ -5,10 +5,10 @@ import os
 # Make sure we're in the right directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-from app import app
-from models import db, Domain, Organization
-from services.user_service import create_user
-from facts_loader import load_all_domains_from_directory
+from app import app  # noqa: E402
+from models import db, Domain, Organization  # noqa: E402
+from services.user_service import create_user  # noqa: E402
+from facts_loader import load_all_domains_from_directory  # noqa: E402
 
 if __name__ == "__main__":
     with app.app_context():

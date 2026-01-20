@@ -63,7 +63,8 @@ def run_migration(db_path="database.db"):
         print("\n[4/5] Adding created_at column to domains...")
         try:
             cursor.execute(
-                "ALTER TABLE domains ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP"
+                "ALTER TABLE domains ADD COLUMN created_at DATETIME "
+                "DEFAULT CURRENT_TIMESTAMP"
             )
             conn.commit()
             print("✓ created_at column added")

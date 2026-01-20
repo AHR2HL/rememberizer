@@ -169,7 +169,8 @@ def create_domain():
             )
 
             flash(
-                f"Domain '{domain.name}' created from CSV with {len(facts_data)} facts!",
+                f"Domain '{domain.name}' created from CSV with "
+                f"{len(facts_data)} facts!",
                 "success",
             )
             return redirect(url_for("teacher.domains"))

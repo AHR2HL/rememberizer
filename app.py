@@ -196,11 +196,11 @@ def update_last_active():
 # REGISTER BLUEPRINTS
 # ============================================================================
 
-from blueprints.auth_routes import auth_bp
-from blueprints.admin import admin_bp
-from blueprints.teacher import teacher_bp
-from blueprints.student import student_bp
-from blueprints.quiz import quiz_bp
+from blueprints.auth_routes import auth_bp  # noqa: E402
+from blueprints.admin import admin_bp  # noqa: E402
+from blueprints.teacher import teacher_bp  # noqa: E402
+from blueprints.student import student_bp  # noqa: E402
+from blueprints.quiz import quiz_bp  # noqa: E402
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
