@@ -17,7 +17,7 @@
         <div class="domain-list">
             {% for data in domain_data %}
             <div class="domain-item">
-                <form method="POST" action="{{ url_for('start') }}" class="domain-form">
+                <form method="POST" action="{{ url_for('quiz.start') }}" class="domain-form">
                     <input type="hidden" name="domain_id" value="{{ data.domain.id }}">
                     <button type="submit" class="domain-button">
                         <strong>{{ data.domain.name }}</strong>
@@ -33,7 +33,7 @@
                     </button>
                 </form>
                 {% if data.progress.attempt_count > 0 %}
-                <form method="POST" action="{{ url_for('reset_domain_from_menu', domain_id=data.domain.id) }}"
+                <form method="POST" action="{{ url_for('quiz.reset_domain_from_menu', domain_id=data.domain.id) }}"
                       class="reset-form" onsubmit="return confirm('Reset all your progress for this domain?');">
                     <button type="submit" class="reset-button">[RESET]</button>
                 </form>
@@ -50,7 +50,7 @@
     {% endif %}
 
     <div class="button-container">
-        <a href="{{ url_for('student_progress') }}" class="action-button">[VIEW DETAILED PROGRESS]</a>
+        <a href="{{ url_for('student.progress') }}" class="action-button">[VIEW DETAILED PROGRESS]</a>
     </div>
 </div>
 {% endblock %}

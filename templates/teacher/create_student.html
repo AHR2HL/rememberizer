@@ -8,7 +8,7 @@
 <div class="content">
     <h2>&gt; STUDENT ACCOUNT CREATION</h2>
 
-    <form method="POST" action="{{ url_for('create_student') }}" class="create-form">
+    <form method="POST" action="{{ url_for('teacher.create_student') }}" class="create-form">
         <div class="form-group">
             <label for="first_name">First Name:</label>
             <input type="text" id="first_name" name="first_name" required
@@ -35,7 +35,7 @@
 
         <div class="form-actions">
             <button type="submit" class="submit-button">[CREATE STUDENT]</button>
-            <a href="{{ url_for('teacher_dashboard') }}" class="home-button" style="margin-left: 15px;">[CANCEL]</a>
+            <a href="{{ url_for('teacher.dashboard') }}" class="home-button" style="margin-left: 15px;">[CANCEL]</a>
         </div>
     </form>
 </div>

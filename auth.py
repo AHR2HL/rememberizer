@@ -12,7 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 # Initialize Flask-Login
 login_manager = LoginManager()
-login_manager.login_view = "login"
+login_manager.login_view = "auth.login"
 login_manager.login_message = "Please log in to access this page."
 
 
@@ -161,7 +161,7 @@ def role_required(*roles):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
-                return redirect(url_for("login"))
+                return redirect(url_for("auth.login"))
 
             if current_user.role not in roles:
                 abort(403)  # Forbidden

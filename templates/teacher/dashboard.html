@@ -6,6 +6,11 @@
 
 {% block content %}
 <div class="content">
+    <div class="navigation" style="margin-bottom: 20px;">
+        <a href="{{ url_for('teacher.dashboard') }}" class="btn-view" style="background-color: #2a5a2a;">[MY STUDENTS]</a>
+        <a href="{{ url_for('teacher.domains') }}" class="btn-view">[MY DOMAINS]</a>
+    </div>
+
     <h2>&gt; MY STUDENTS ({{ student_data|length }})</h2>
 
     {% if student_data|length == 0 %}
@@ -51,8 +56,8 @@
                 {% endif %}
 
                 <div class="student-actions">
-                    <a href="{{ url_for('student_detail', student_id=data.student.id) }}" class="btn-view">[VIEW DETAILS]</a>
-                    <form method="POST" action="{{ url_for('deactivate_student', student_id=data.student.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to deactivate this student?');">
+                    <a href="{{ url_for('teacher.student_detail', student_id=data.student.id) }}" class="btn-view">[VIEW DETAILS]</a>
+                    <form method="POST" action="{{ url_for('teacher.deactivate_student', student_id=data.student.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to deactivate this student?');">
                         <button type="submit" class="btn-danger">[DEACTIVATE]</button>
                     </form>
                 </div>
@@ -62,7 +67,7 @@
     {% endif %}
 
     <div class="button-container">
-        <a href="{{ url_for('create_student') }}" class="action-button">[CREATE NEW STUDENT]</a>
+        <a href="{{ url_for('teacher.create_student') }}" class="action-button">[CREATE NEW STUDENT]</a>
     </div>
 </div>
 {% endblock %}

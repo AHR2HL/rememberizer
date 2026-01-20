@@ -43,7 +43,7 @@
                         Last Active: {% if teacher.last_active %}{{ teacher.last_active.strftime('%Y-%m-%d %H:%M') }}{% else %}Never{% endif %}
                     </div>
                     <div class="student-actions">
-                        <form method="POST" action="{{ url_for('deactivate_teacher', teacher_id=teacher.id) }}" style="display: inline;">
+                        <form method="POST" action="{{ url_for('admin.deactivate_teacher', teacher_id=teacher.id) }}" style="display: inline;">
                             <button type="submit" class="btn-danger" onclick="return confirm('Deactivate this teacher?')">
                                 [DEACTIVATE]
                             </button>
@@ -57,7 +57,7 @@
         {% endif %}
 
         <div class="button-container">
-            <a href="{{ url_for('create_teacher') }}" class="action-button">[CREATE NEW TEACHER]</a>
+            <a href="{{ url_for('admin.create_teacher') }}" class="action-button">[CREATE NEW TEACHER]</a>
         </div>
     </div>
 </div>

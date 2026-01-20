@@ -21,13 +21,13 @@
                 <div class="domain-list">
                     {% for domain in domains %}
                         <div class="domain-item">
-                            <form method="POST" action="{{ url_for('start') }}" class="domain-form">
+                            <form method="POST" action="{{ url_for('quiz.start') }}" class="domain-form">
                                 <input type="hidden" name="domain_id" value="{{ domain.id }}">
                                 <button type="submit" class="domain-button">
                                     [{{ loop.index }}] {{ domain.name }}
                                 </button>
                             </form>
-                            <form method="POST" action="{{ url_for('reset_domain_from_menu', domain_id=domain.id) }}" class="reset-form">
+                            <form method="POST" action="{{ url_for('quiz.reset_domain_from_menu', domain_id=domain.id) }}" class="reset-form">
                                 <button type="submit" class="reset-button">
                                     [RESET]
                                 </button>

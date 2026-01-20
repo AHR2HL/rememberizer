@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}My Domains{% endblock %}
+
+{% block header_title %}{{ "MY DOMAINS" | center_in_box }}{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="navigation" style="margin-bottom: 20px;">
+        <a href="{{ url_for('teacher.dashboard') }}" class="btn-view">[MY STUDENTS]</a>
+        <a href="{{ url_for('teacher.domains') }}" class="btn-view" style="background-color: #2a5a2a;">[MY DOMAINS]</a>
+    </div>
+
+    {% set my_domains = domain_data | selectattr('created_by_me', 'equalto', true) | list %}
+    {% set other_domains = domain_data | rejectattr('created_by_me', 'equalto', true) | list %}
+
+    {% if my_domains|length > 0 %}
+        <h2>&gt; DOMAINS I CREATED ({{ my_domains|length }})</h2>
+        <div class="student-list">
+            {% for data in my_domains %}
+            <div class="student-item">
+                <div class="student-header">
+                    <div>
+                        <div class="student-name">{{ data.domain.name }}</div>
+                        <div class="student-info">
+                            {% if data.domain.is_published %}
+                            <span style="color: #00ff00;">[PUBLISHED - Global]</span>
+                            {% else %}
+                            <span style="color: #ffff00;">[ORG-ONLY - Private]</span>
+                            {% endif %}
+                        </div>
+                        <div class="student-info">
+                            Fields: {{ data.domain.get_field_names() | join(', ') }}
+                        </div>
+                        <div class="student-info">
+                            Facts: {{ data.progress.total_facts if data.progress else 0 }}
+                        </div>
+                        {% if data.progress and data.progress.progress_string %}
+                        <div class="student-info">
+                            Your Progress: {{ data.progress.progress_string }}
+                        </div>
+                        <div class="student-info">
+                            Learned: {{ data.progress.learned_count }}/{{ data.progress.total_facts }} |
+                            Mastered: {{ data.progress.mastered_count }}/{{ data.progress.total_facts }}
+                        </div>
+                        {% else %}
+                        <div class="student-info">
+                            Your Progress: Not started
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="student-actions">
+                    <form method="POST" action="{{ url_for('quiz.start') }}" style="display: inline;">
+                        <input type="hidden" name="domain_id" value="{{ data.domain.id }}">
+                        <button type="submit" class="btn-view">[TEST DOMAIN]</button>
+                    </form>
+
+                    {% if data.domain.is_published %}
+                        <form method="POST" action="{{ url_for('teacher.toggle_publish_domain', domain_id=data.domain.id) }}" style="display: inline;">
+                            <input type="hidden" name="action" value="unpublish">
+                            <button type="submit" class="btn-danger">[UNPUBLISH]</button>
+                        </form>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('teacher.toggle_publish_domain', domain_id=data.domain.id) }}" style="display: inline;">
+                            <input type="hidden" name="action" value="publish">
+                            <button type="submit" class="btn-view">[PUBLISH]</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <h2>&gt; AVAILABLE DOMAINS ({{ other_domains|length }})</h2>
+
+    {% if other_domains|length == 0 %}
+        <div class="info-box">
+            <p>No other domains available.</p>
+            <p>Create your own domain using the button below.</p>
+        </div>
+    {% else %}
+        <div class="student-list">
+            {% for data in other_domains %}
+            <div class="student-item">
+                <div class="student-header">
+                    <div>
+                        <div class="student-name">{{ data.domain.name }}</div>
+                        <div class="student-info">
+                            {% if data.domain.is_published %}
+                            <span style="color: #00ff00;">[PUBLISHED - Global]</span>
+                            {% else %}
+                            <span style="color: #ffff00;">[ORG-ONLY]</span>
+                            {% endif %}
+                            {% if data.domain.creator %}
+                            - Created by {{ data.domain.creator.get_full_name() }}
+                            {% else %}
+                            - System Domain
+                            {% endif %}
+                        </div>
+                        <div class="student-info">
+                            Fields: {{ data.domain.get_field_names() | join(', ') }}
+                        </div>
+                        <div class="student-info">
+                            Facts: {{ data.progress.total_facts if data.progress else 0 }}
+                        </div>
+                        {% if data.progress and data.progress.progress_string %}
+                        <div class="student-info">
+                            Your Progress: {{ data.progress.progress_string }}
+                        </div>
+                        <div class="student-info">
+                            Learned: {{ data.progress.learned_count }}/{{ data.progress.total_facts }} |
+                            Mastered: {{ data.progress.mastered_count }}/{{ data.progress.total_facts }}
+                        </div>
+                        {% else %}
+                        <div class="student-info">
+                            Your Progress: Not started
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="student-actions">
+                    <form method="POST" action="{{ url_for('quiz.start') }}" style="display: inline;">
+                        <input type="hidden" name="domain_id" value="{{ data.domain.id }}">
+                        <button type="submit" class="btn-view">[TEST DOMAIN]</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="button-container">
+        <a href="{{ url_for('teacher.create_domain_form') }}" class="action-button">[CREATE NEW DOMAIN]</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer_text %}Teacher Domains - Test and Manage Domains{% endblock %}

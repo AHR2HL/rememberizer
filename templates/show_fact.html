@@ -49,7 +49,7 @@
             </table>
 
             <div class="button-container">
-                <form method="POST" action="{{ url_for('mark_learned', fact_id=fact.id) }}">
+                <form method="POST" action="{{ url_for('quiz.mark_learned', fact_id=fact.id) }}">
                     <button type="submit" class="action-button">
                         [CONTINUE] &gt;&gt;
                     </button>
