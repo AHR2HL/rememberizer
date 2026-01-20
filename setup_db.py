@@ -26,8 +26,8 @@ if __name__ == "__main__":
         print(f"Tables created: {tables}")
 
         # Check domains table schema
-        if 'domains' in tables:
-            columns = inspector.get_columns('domains')
+        if "domains" in tables:
+            columns = inspector.get_columns("domains")
             print("\nDomains table columns:")
             for col in columns:
                 print(f"  - {col['name']}: {col['type']}")

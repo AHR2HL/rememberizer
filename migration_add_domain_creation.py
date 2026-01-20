@@ -85,7 +85,9 @@ def run_migration(db_path="database.db"):
         """)
         rows_updated = cursor.rowcount
         conn.commit()
-        print(f"✓ {rows_updated} existing domains set as published (globally available)")
+        print(
+            f"✓ {rows_updated} existing domains set as published (globally available)"
+        )
 
         print("\n" + "=" * 60)
         print("✓ Migration completed successfully!")

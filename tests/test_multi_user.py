@@ -100,7 +100,10 @@ class TestDomainAssignment:
     ):
         """Test assigning a domain to a student."""
         with app.app_context():
-            from services.domain_service import assign_domain_to_user, is_domain_assigned
+            from services.domain_service import (
+                assign_domain_to_user,
+                is_domain_assigned,
+            )
 
             # Assign domain
             assign_domain_to_user(student_user.id, populated_db.id, teacher_user.id)
@@ -123,7 +126,10 @@ class TestDomainAssignment:
     def test_unassign_domain_from_student(self, app, student_user, assigned_domain):
         """Test unassigning a domain from a student."""
         with app.app_context():
-            from services.domain_service import unassign_domain_from_user, is_domain_assigned
+            from services.domain_service import (
+                unassign_domain_from_user,
+                is_domain_assigned,
+            )
 
             # Unassign domain
             unassign_domain_from_user(student_user.id, assigned_domain.id)

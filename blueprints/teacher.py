@@ -31,7 +31,10 @@ def dashboard():
     """Teacher dashboard showing all students and their progress."""
     from services.user_service import get_students_by_teacher
     from services.domain_service import get_user_domains
-    from services.progress_service import get_progress_string, get_questions_answered_today
+    from services.progress_service import (
+        get_progress_string,
+        get_questions_answered_today,
+    )
     from models import Domain, Attempt
 
     require_teacher_or_admin()
