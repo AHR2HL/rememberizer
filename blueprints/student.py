@@ -9,7 +9,9 @@ from services.progress_service import (
     get_total_time_spent,
     get_unique_session_count,
     format_time_spent,
+    is_domain_complete,
 )
+from services.streak_service import get_streak_info
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
 
@@ -33,13 +35,20 @@ def domains():
     domain_data = []
     for domain in assigned_domains:
         progress = get_student_domain_progress(current_user.id, domain.id)
+        progress["is_complete"] = is_domain_complete(current_user.id, domain.id)
         domain_data.append({"domain": domain, "progress": progress})
 
     # Get today's question count
     questions_today = get_questions_answered_today(current_user.id)
 
+    # Get streak info
+    streak_info = get_streak_info(current_user.id)
+
     return render_template(
-        "student/domains.html", domain_data=domain_data, questions_today=questions_today
+        "student/domains.html",
+        domain_data=domain_data,
+        questions_today=questions_today,
+        streak_info=streak_info,
     )
 
 
@@ -56,6 +65,7 @@ def progress():
     total_attempts = 0
     for domain in assigned_domains:
         progress = get_student_domain_progress(current_user.id, domain.id)
+        progress["is_complete"] = is_domain_complete(current_user.id, domain.id)
         domain_data.append({"domain": domain, "progress": progress})
         total_attempts += progress["attempt_count"]
 
@@ -65,6 +75,9 @@ def progress():
     session_count = get_unique_session_count(current_user.id)
     formatted_time = format_time_spent(total_time_minutes)
 
+    # Get streak info
+    streak_info = get_streak_info(current_user.id)
+
     return render_template(
         "student/progress.html",
         domain_data=domain_data,
@@ -72,4 +85,5 @@ def progress():
         questions_today=questions_today,
         formatted_time=formatted_time,
         session_count=session_count,
+        streak_info=streak_info,
     )

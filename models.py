@@ -77,6 +77,12 @@ class User(db.Model):
     )  # For first-time password setup
     setup_token_expires = db.Column(db.DateTime, nullable=True)  # Token expiration
 
+    # Streak tracking fields
+    current_streak = db.Column(db.Integer, default=0, nullable=False)
+    longest_streak = db.Column(db.Integer, default=0, nullable=False)
+    last_practice_date = db.Column(db.Date, nullable=True)  # Date only, not datetime
+    daily_goal = db.Column(db.Integer, default=20, nullable=False)  # Questions per day
+
     organization = db.relationship("Organization", back_populates="users")
     domain_assignments = db.relationship(
         "UserDomainAssignment",

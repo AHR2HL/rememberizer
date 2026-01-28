@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from flask_login import current_user
-from models import Domain, Fact
+from models import Domain, Fact, FactState
 from services.fact_service import (
     mark_fact_learned,
     mark_fact_shown,
@@ -11,6 +11,8 @@ from services.fact_service import (
     reset_domain_progress,
     update_consecutive_attempts,
     get_learned_facts,
+    get_out_of_order_facts,
+    get_attempt_count,
 )
 from services.domain_service import (
     is_domain_assigned,
@@ -83,15 +85,31 @@ def start():
     session["consecutive_correct_in_session"] = 0
     session["doom_loop_active"] = False
 
-    # Get first unlearned fact to show (pass user_id)
+    # First, check for out-of-order facts (unlearned facts before learned facts)
+    # These should be re-shown before introducing new facts
+    out_of_order_facts = get_out_of_order_facts(domain_id, current_user.id)
+
+    if out_of_order_facts:
+        # Re-show the first out-of-order fact
+        mark_fact_shown(out_of_order_facts[0].id, current_user.id)
+        return redirect(url_for("quiz.show_fact", fact_id=out_of_order_facts[0].id))
+
+    # If no out-of-order facts, get next unlearned fact
     next_fact = get_next_unlearned_fact(domain_id, current_user.id)
+
     if not next_fact:
-        # No unlearned facts, start quizzing
+        # All facts learned, proceed to quiz
         return redirect(url_for("quiz.quiz"))
 
     # Show first unlearned fact (pass user_id)
     mark_fact_shown(next_fact.id, current_user.id)
     return redirect(url_for("quiz.show_fact", fact_id=next_fact.id))
+
+
+def is_fact_out_of_order(fact_id, domain_id, user_id):
+    """Check if a specific fact is out of order."""
+    out_of_order_facts = get_out_of_order_facts(domain_id, user_id)
+    return any(f.id == fact_id for f in out_of_order_facts)
 
 
 @quiz_bp.route("/show_fact/<int:fact_id>")
@@ -112,6 +130,9 @@ def show_fact(fact_id):
     # Get highlight_field from query params (if user got question wrong)
     highlight_field = request.args.get("highlight_field", None)
 
+    # Check if this is an out-of-order fact BEFORE marking as shown
+    is_missed_learning = is_fact_out_of_order(fact_id, domain.id, current_user.id)
+
     # Mark as shown (but not learned yet - that happens on continue) (pass user_id)
     mark_fact_shown(fact_id, current_user.id)
 
@@ -122,6 +143,7 @@ def show_fact(fact_id):
         field_names=field_names,
         domain=domain,
         highlight_field=highlight_field,
+        is_missed_learning=is_missed_learning,
     )
 
 
@@ -185,6 +207,49 @@ def quiz():
     pending_fact_id = session.get("pending_quiz_fact_id")
     last_question_key = session.get("last_question_key")
 
+    # Check if we're in review mastered mode
+    review_mastered_mode = session.get("review_mastered_mode", False)
+
+    if review_mastered_mode:
+        # Select fact by least recently attempted
+        from quiz_logic import select_least_recently_attempted
+
+        fact = select_least_recently_attempted(domain_id, current_user.id)
+
+        if fact is None:
+            # Shouldn't happen, but safety check
+            session.pop("review_mastered_mode", None)
+            return "No facts available to review.", 200
+
+        # Continue with normal quiz generation using this fact
+        question_data = prepare_quiz_question_for_fact(
+            fact, domain_id, last_question_key
+        )
+
+        # Store current question data in session
+        if question_data:
+            session["current_fact_id"] = question_data["fact_id"]
+            session["current_field_name"] = question_data["quiz_field"]
+            session["correct_index"] = question_data["correct_index"]
+            session["correct_answer"] = question_data["correct_answer"]
+            session["options"] = question_data["options"]
+            session["context_field"] = question_data["context_field"]
+            fact_id = question_data["fact_id"]
+            context = question_data["context_field"]
+            quiz = question_data["quiz_field"]
+            session["last_question_key"] = f"{fact_id}:{context}:{quiz}"
+
+            domain = Domain.query.get(domain_id)
+
+            return render_template(
+                "quiz.html",
+                question=question_data["question"],
+                options=question_data["options"],
+                domain=domain,
+            )
+        else:
+            return "Error generating question", 400
+
     # Check if in doom loop recovery mode (override fact selection)
     if session.get("doom_loop_active") and session.get("doom_loop_recovery_fact_id"):
         recovery_fact_id = session["doom_loop_recovery_fact_id"]
@@ -208,6 +273,7 @@ def quiz():
                     session["correct_index"] = question_data["correct_index"]
                     session["correct_answer"] = question_data["correct_answer"]
                     session["options"] = question_data["options"]
+                    session["context_field"] = question_data["context_field"]
                     context_field = question_data["context_field"]
                     quiz_field = question_data["quiz_field"]
                     session["last_question_key"] = (
@@ -259,7 +325,8 @@ def quiz():
                         url_for("quiz.show_fact", fact_id=next_unlearned.id)
                     )
                 else:
-                    return "All facts mastered! Great job!", 200
+                    # All facts mastered - celebrate!
+                    return redirect(url_for("quiz.celebrate", domain_id=domain_id))
             question_data = prepare_quiz_question_for_fact(
                 fact, domain_id, last_question_key
             )
@@ -280,7 +347,8 @@ def quiz():
                 mark_fact_shown(next_unlearned.id, current_user.id)
                 return redirect(url_for("quiz.show_fact", fact_id=next_unlearned.id))
             else:
-                return "All facts mastered! Great job!", 200
+                # All facts mastered - celebrate!
+                return redirect(url_for("quiz.celebrate", domain_id=domain_id))
 
         question_data = prepare_quiz_question_for_fact(
             fact, domain_id, last_question_key
@@ -299,6 +367,7 @@ def quiz():
     session["options"] = question_data[
         "options"
     ]  # NEW: Store all options to look up selected value
+    session["context_field"] = question_data["context_field"]
     fact_id = question_data["fact_id"]
     context = question_data["context_field"]
     quiz = question_data["quiz_field"]
@@ -349,11 +418,45 @@ def answer():
     selected_answer = options[selected_index]
     is_correct = selected_answer == correct_answer
 
+    # If not correct, check for "multiple correct answers" scenario
+    # This happens when the question asks "Which X has Y=value?" and multiple Xs have that value
+    if not is_correct:
+        context_field_name = session.get("context_field")
+
+        # Only check for multiple correct if we have context field info
+        if context_field_name:
+            # Get the fact being quizzed
+            fact = Fact.query.get(fact_id)
+
+            if fact:
+                fact_data = fact.get_fact_data()
+                context_value = fact_data.get(context_field_name)
+
+                # Find all facts in domain
+                all_facts = Fact.query.filter_by(domain_id=domain_id).all()
+
+                # Check if selected answer matches another fact with the same context value
+                for other_fact in all_facts:
+                    other_data = other_fact.get_fact_data()
+
+                    # If another fact has the same context value AND the selected answer matches its quiz field
+                    if (
+                        other_data.get(context_field_name) == context_value
+                        and other_data.get(field_name) == selected_answer
+                    ):
+                        is_correct = True
+                        break
+
     # Get session ID for engagement tracking
     quiz_session_id = session.get("quiz_session_id")
 
     # Record attempt (pass user_id and session_id)
     record_attempt(fact_id, field_name, is_correct, current_user.id, quiz_session_id)
+
+    # Update streak (idempotent for same day)
+    from services.streak_service import update_streak
+
+    update_streak(current_user.id)
 
     # Update recent attempts (keep last 4) for doom loop detection
     recent = session.get("recent_attempts", [])
@@ -492,3 +595,66 @@ def reset():
     """Reset session (for testing purposes)."""
     session.clear()
     return redirect(url_for("quiz.index"))
+
+
+@quiz_bp.route("/celebrate/<int:domain_id>")
+def celebrate(domain_id):
+    """Display celebration screen for completing a domain."""
+    from flask_login import login_required
+
+    # Require authentication
+    if not current_user.is_authenticated:
+        return redirect(url_for("auth.login"))
+
+    domain = Domain.query.get_or_404(domain_id)
+
+    # Get completion statistics
+    from services.progress_service import (
+        get_student_domain_progress,
+        format_time_spent,
+        get_unique_session_count,
+    )
+
+    progress = get_student_domain_progress(current_user.id, domain_id)
+
+    # Format time for display
+    time_display = format_time_spent(progress["time_spent_minutes"])
+
+    # Get unique session count for this domain
+    session_count = get_unique_session_count(current_user.id, domain_id)
+
+    return render_template(
+        "celebration.html",
+        domain=domain,
+        total_facts=progress["total_facts"],
+        attempt_count=progress["attempt_count"],
+        time_spent=time_display,
+        session_count=session_count,
+    )
+
+
+@quiz_bp.route("/continue_mastered/<int:domain_id>")
+def continue_mastered_domain(domain_id):
+    """Continue quizzing a fully-mastered domain.
+
+    Prioritizes facts that were attempted longest ago.
+    """
+    # Require authentication
+    if not current_user.is_authenticated:
+        return redirect(url_for("auth.login"))
+
+    # Clear any pending facts
+    session.pop("pending_quiz_fact_id", None)
+    session.pop("consecutive_correct_needed", None)
+    session.pop("pending_review_fact_id", None)
+    session.pop("doom_loop_active", None)
+
+    # Set domain and increment question count
+    session["domain_id"] = domain_id
+    session["question_count"] = session.get("question_count", 0)
+
+    # Flag that we're in "review mastered" mode
+    session["review_mastered_mode"] = True
+
+    # Redirect to quiz
+    return redirect(url_for("quiz.quiz"))

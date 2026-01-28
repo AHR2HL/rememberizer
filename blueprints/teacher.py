@@ -34,6 +34,7 @@ def dashboard():
     from services.progress_service import (
         get_progress_string,
         get_questions_answered_today,
+        is_domain_complete,
     )
     from models import Domain, Attempt
 
@@ -55,7 +56,10 @@ def dashboard():
         domain_progress = []
         for domain in assigned_domains:
             progress_str = get_progress_string(domain.id, student.id)
-            domain_progress.append({"domain": domain, "progress": progress_str})
+            is_complete = is_domain_complete(student.id, domain.id)
+            domain_progress.append(
+                {"domain": domain, "progress": progress_str, "is_complete": is_complete}
+            )
 
         # Get engagement metrics
         questions_today = get_questions_answered_today(student.id)
@@ -87,7 +91,10 @@ def dashboard():
 def domains():
     """List all available domains with testing option."""
     from services.domain_service import get_visible_domains
-    from services.progress_service import get_student_domain_progress
+    from services.progress_service import (
+        get_student_domain_progress,
+        is_domain_complete,
+    )
 
     require_teacher_or_admin()
 
@@ -98,6 +105,8 @@ def domains():
     domain_data = []
     for domain in visible_domains:
         progress = get_student_domain_progress(current_user.id, domain.id)
+        if progress:
+            progress["is_complete"] = is_domain_complete(current_user.id, domain.id)
         domain_data.append(
             {
                 "domain": domain,
@@ -315,7 +324,9 @@ def student_detail(student_id):
         get_total_time_spent,
         get_unique_session_count,
         format_time_spent,
+        is_domain_complete,
     )
+    from services.streak_service import get_streak_info
     from models import User, Domain, Attempt
 
     require_teacher_or_admin()
@@ -340,6 +351,8 @@ def student_detail(student_id):
 
         if is_assigned:
             progress_data = get_student_domain_progress(student.id, domain.id)
+            if progress_data:
+                progress_data["is_complete"] = is_domain_complete(student.id, domain.id)
             domain_details.append(
                 {"domain": domain, "is_assigned": True, "progress": progress_data}
             )
@@ -355,6 +368,9 @@ def student_detail(student_id):
     formatted_time = format_time_spent(total_time_minutes)
     total_questions = Attempt.query.filter_by(user_id=student.id).count()
 
+    # Get streak info for this student
+    streak_info = get_streak_info(student.id)
+
     return render_template(
         "teacher/student_detail.html",
         student=student,
@@ -363,6 +379,7 @@ def student_detail(student_id):
         formatted_time=formatted_time,
         session_count=session_count,
         total_questions=total_questions,
+        streak_info=streak_info,
     )
 
 

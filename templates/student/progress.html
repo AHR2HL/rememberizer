@@ -6,6 +6,20 @@
 
 {% block content %}
 <div class="content">
+    {% if streak_info %}
+    <h2>&gt; STREAK</h2>
+
+    <div class="info-box">
+        <p><strong>Current Streak:</strong> {{ streak_info.current_streak }} {% if streak_info.current_streak == 1 %}day{% else %}days{% endif %}</p>
+        <p><strong>Longest Streak:</strong> {{ streak_info.longest_streak }} {% if streak_info.longest_streak == 1 %}day{% else %}days{% endif %}</p>
+        <p><strong>Daily Goal:</strong> {{ streak_info.questions_today }}/{{ streak_info.daily_goal }} questions
+        {% if streak_info.goal_completed %}<span style="color: #00FF00;"> [GOAL MET]</span>{% endif %}</p>
+        {% if streak_info.streak_at_risk %}
+        <p style="color: #FFAA00;"><strong>[!] Streak at risk - practice today to keep it!</strong></p>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <h2>&gt; OVERALL STATS</h2>
 
     <div class="info-box">
@@ -28,6 +42,9 @@
             <div class="domain-assignment-item">
                 <div>
                     <strong>{{ data.domain.name }}</strong>
+                    {% if data.progress.is_complete %}
+                    <span style="color: #00FF00;"> [COMPLETED]</span>
+                    {% endif %}
                     <br>
                     Progress: {{ data.progress.progress_string }}
                     <br>

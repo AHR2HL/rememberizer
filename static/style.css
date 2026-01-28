@@ -657,3 +657,52 @@ h2 {
 .welcome-box strong {
     color: #00FF00;
 }
+
+/* ===========================================
+   STREAK SYSTEM STYLES
+   =========================================== */
+
+.streak-banner {
+    text-align: center;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 2px solid #00FF00;
+    background-color: #001a00;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.streak-label {
+    color: #00FF00;
+    font-weight: bold;
+}
+
+.streak-count {
+    font-size: 2em;
+    font-weight: bold;
+    color: #FFAA00;
+    margin: 0 5px;
+}
+
+.streak-unit {
+    color: #00FF00;
+    font-weight: bold;
+}
+
+.streak-warning {
+    color: #FFAA00;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.daily-goal-progress {
+    text-align: center;
+    margin: 15px 0 25px 0;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.progress-ascii {
+    color: #00FF00;
+    letter-spacing: 3px;
+    font-size: 1.1em;
+}

@@ -6,6 +6,26 @@
 
 {% block content %}
 <div class="content">
+    {% if streak_info %}
+    <div class="streak-banner">
+        <span class="streak-label">&gt; STREAK:</span>
+        <span class="streak-count">{{ streak_info.current_streak }}</span>
+        <span class="streak-unit">{% if streak_info.current_streak == 1 %}DAY{% else %}DAYS{% endif %}</span>
+        {% if streak_info.streak_at_risk %}
+        <br><span class="streak-warning">[!] Practice today to keep your streak</span>
+        {% endif %}
+    </div>
+
+    <div class="daily-goal-progress">
+        <span>&gt; TODAY: {{ streak_info.questions_today }}/{{ streak_info.daily_goal }} questions</span>
+        {% if streak_info.goal_completed %}
+        <span style="color: #00FF00;"> [GOAL MET]</span>
+        {% endif %}
+        <br>
+        <span class="progress-ascii">[{{ '=' * (streak_info.goal_percentage // 10) }}{{ '-' * (10 - streak_info.goal_percentage // 10) }}]</span>
+    </div>
+    {% endif %}
+
     <h2>&gt; YOUR ASSIGNED DOMAINS</h2>
 
     {% if domain_data|length == 0 %}
@@ -21,6 +41,9 @@
                     <input type="hidden" name="domain_id" value="{{ data.domain.id }}">
                     <button type="submit" class="domain-button">
                         <strong>{{ data.domain.name }}</strong>
+                        {% if data.progress.is_complete %}
+                        <span style="color: #00FF00;"> [COMPLETED]</span>
+                        {% endif %}
                         <br>
                         Progress: {{ data.progress.progress_string }}
                         <br>
@@ -43,11 +66,6 @@
         </div>
     {% endif %}
 
-    {% if questions_today > 0 %}
-    <div class="info-box" style="text-align: center;">
-        <p><strong>Questions Today:</strong> {{ questions_today }}</p>
-    </div>
-    {% endif %}
 
     <div class="button-container">
         <a href="{{ url_for('student.progress') }}" class="action-button">[VIEW DETAILED PROGRESS]</a>

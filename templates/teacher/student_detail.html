@@ -30,6 +30,13 @@
         {% if session_count > 0 %}
         <p><strong>Practice Sessions:</strong> {{ session_count }}</p>
         {% endif %}
+        {% if streak_info %}
+        <p><strong>Current Streak:</strong> {{ streak_info.current_streak }} {% if streak_info.current_streak == 1 %}day{% else %}days{% endif %}</p>
+        <p><strong>Longest Streak:</strong> {{ streak_info.longest_streak }} {% if streak_info.longest_streak == 1 %}day{% else %}days{% endif %}</p>
+        {% if streak_info.streak_at_risk %}
+        <p style="color: #FFAA00;"><strong>[!] Streak at risk - hasn't practiced today</strong></p>
+        {% endif %}
+        {% endif %}
     </div>
 
     <h2>&gt; DOMAIN PROGRESS</h2>
@@ -45,6 +52,9 @@
                     {% if detail.progress %}
                         <br>
                         Progress: {{ detail.progress.progress_string }}
+                        {% if detail.progress.is_complete %}
+                        <span style="color: #00FF00;"> [COMPLETED]</span>
+                        {% endif %}
                         <br>
                         Learned: {{ detail.progress.learned_count }}/{{ detail.progress.total_facts }} |
                         Mastered: {{ detail.progress.mastered_count }}/{{ detail.progress.total_facts }}
